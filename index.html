@@ -281,6 +281,12 @@
             font-size: 0.9rem;
         }
 
+        .issue-status {
+            white-space: nowrap;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
         .issue-priority {
             white-space: nowrap;
             color: var(--text-muted);
@@ -484,14 +490,15 @@
         }
 
         function renderIssuesTable(issues) {
-            // Sort by created date, ascending
-            issues.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            // Sort by created date, descending
+            issues.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
             let html = '<table>';
             html += '<thead><tr>';
             html += '<th>Source</th>';
             html += '<th>Ref</th>';
             html += '<th>Title</th>';
+            html += '<th>Status</th>';
             html += '<th>Priority</th>';
             html += '<th>Created</th>';
             html += '<th>Updated</th>';
@@ -503,12 +510,14 @@
                 const updated = new Date(issue.updated_at).toLocaleDateString();
                 const urlPath = getUrlPath(issue.web_url);
                 const color = getProviderColor(issue.source);
+                const status = issue.status || '';
                 const priority = issue.priority || '';
 
                 html += `<tr style="border-left: 4px solid ${color};">`;
                 html += '<td class="issue-source">' + escapeHtml(issue.source) + '</td>';
                 html += '<td class="issue-ref"><a href="' + escapeHtml(issue.web_url) + '" target="_blank">' + escapeHtml(urlPath) + '</a></td>';
                 html += '<td class="issue-title"><a href="' + escapeHtml(issue.web_url) + '" target="_blank">' + escapeHtml(issue.title) + '</a></td>';
+                html += '<td class="issue-status">' + escapeHtml(status) + '</td>';
                 html += '<td class="issue-priority">' + escapeHtml(priority) + '</td>';
                 html += '<td class="date-cell">' + created + '</td>';
                 html += '<td class="date-cell">' + updated + '</td>';

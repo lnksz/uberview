@@ -121,6 +121,7 @@ type Issue struct {
 	Source    string    `json:"source"`
 	Title     string    `json:"title"`
 	WebURL    string    `json:"web_url"`
+	Status    string    `json:"status,omitempty"`
 	Priority  string    `json:"priority,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -384,6 +385,7 @@ func (a *App) fetchGitLabIssues(provider TaskProvider) ([]Issue, error) {
 				Source:    provider.Name,
 				Title:     gi.Title,
 				WebURL:    gi.WebURL,
+				Status:    gi.State,
 				CreatedAt: gi.CreatedAt,
 				UpdatedAt: gi.UpdatedAt,
 			}
@@ -456,6 +458,7 @@ func (a *App) fetchJiraCloudIssues(provider TaskProvider) ([]Issue, error) {
 				Source:    provider.Name,
 				Title:     ji.Fields.Summary,
 				WebURL:    webURL,
+				Status:    ji.Fields.Status.Name,
 				Priority:  ji.Fields.Priority.Name,
 				CreatedAt: createdAt,
 				UpdatedAt: updatedAt,
@@ -532,6 +535,7 @@ func (a *App) fetchJiraServerIssues(provider TaskProvider) ([]Issue, error) {
 				Source:    provider.Name,
 				Title:     ji.Fields.Summary,
 				WebURL:    webURL,
+				Status:    ji.Fields.Status.Name,
 				Priority:  ji.Fields.Priority.Name,
 				CreatedAt: createdAt,
 				UpdatedAt: updatedAt,
