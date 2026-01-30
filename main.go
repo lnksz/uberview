@@ -64,13 +64,11 @@ type GitLabIssue struct {
 
 // Issue represents a generic issue from any task provider
 type Issue struct {
-	ID        int       `json:"id"`
+	Source    string    `json:"source"`
 	Title     string    `json:"title"`
 	WebURL    string    `json:"web_url"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
-	Labels    []string  `json:"labels"`
-	Project   string    `json:"project"`
 }
 
 // ProviderStatus represents the task provider server status
@@ -188,13 +186,11 @@ func (a *App) fetchGitLabIssues() ([]Issue, error) {
 		// Convert GitLab issues to generic Issue format
 		for _, gi := range gitlabIssues {
 			issue := Issue{
-				ID:        gi.IID,
+				Source:    a.config.TaskProvider.Name,
 				Title:     gi.Title,
 				WebURL:    gi.WebURL,
 				CreatedAt: gi.CreatedAt,
 				UpdatedAt: gi.UpdatedAt,
-				Labels:    gi.Labels,
-				Project:   gi.Project.PathWithNS,
 			}
 			allIssues = append(allIssues, issue)
 		}

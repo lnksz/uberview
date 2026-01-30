@@ -171,28 +171,22 @@
             text-decoration: underline;
         }
 
-        .issue-id {
+        .issue-source {
             color: var(--text-muted);
             font-size: 0.9rem;
         }
 
-        .issue-project {
-            color: var(--text-muted);
+        .issue-ref {
             font-size: 0.85rem;
         }
 
-        .label {
-            display: inline-block;
-            padding: 0.2rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            background: var(--accent);
-            margin-right: 0.25rem;
-            margin-bottom: 0.25rem;
+        .issue-ref a {
+            color: var(--text-muted);
+            text-decoration: none;
         }
 
-        .labels-cell {
-            max-width: 200px;
+        .issue-ref a:hover {
+            text-decoration: underline;
         }
 
         .date-cell {
@@ -344,12 +338,14 @@
         }
 
         function renderIssuesTable(issues) {
+            // Sort by created date, ascending
+            issues.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
             let html = '<table>';
             html += '<thead><tr>';
-            html += '<th>ID</th>';
+            html += '<th>Source</th>';
+            html += '<th>Ref</th>';
             html += '<th>Title</th>';
-            html += '<th>Project</th>';
-            html += '<th>Labels</th>';
             html += '<th>Created</th>';
             html += '<th>Updated</th>';
             html += '</tr></thead>';
@@ -358,13 +354,12 @@
             for (const issue of issues) {
                 const created = new Date(issue.created_at).toLocaleDateString();
                 const updated = new Date(issue.updated_at).toLocaleDateString();
-                const projectName = issue.project || 'Unknown';
+                const urlPath = getUrlPath(issue.web_url);
 
                 html += '<tr>';
-                html += '<td class="issue-id">#' + issue.id + '</td>';
+                html += '<td class="issue-source">' + escapeHtml(issue.source) + '</td>';
+                html += '<td class="issue-ref"><a href="' + escapeHtml(issue.web_url) + '" target="_blank">' + escapeHtml(urlPath) + '</a></td>';
                 html += '<td class="issue-title"><a href="' + escapeHtml(issue.web_url) + '" target="_blank">' + escapeHtml(issue.title) + '</a></td>';
-                html += '<td class="issue-project">' + escapeHtml(projectName) + '</td>';
-                html += '<td class="labels-cell">' + renderLabels(issue.labels) + '</td>';
                 html += '<td class="date-cell">' + created + '</td>';
                 html += '<td class="date-cell">' + updated + '</td>';
                 html += '</tr>';
@@ -374,9 +369,13 @@
             return html;
         }
 
-        function renderLabels(labels) {
-            if (!labels || labels.length === 0) return '-';
-            return labels.map(label => '<span class="label">' + escapeHtml(label) + '</span>').join('');
+        function getUrlPath(url) {
+            try {
+                const parsed = new URL(url);
+                return parsed.pathname;
+            } catch {
+                return url;
+            }
         }
 
         function escapeHtml(text) {
