@@ -1,0 +1,11 @@
+# Uberview Configuration
+
+server:
+  port: 8080
+
+task_provider:
+  type: "gitlab"  # Currently supported: gitlab
+  name: "GitLab"
+  url: "https://gitlab.com"
+  token: "your-gitlab-personal-access-token"
+  user: "your-username"

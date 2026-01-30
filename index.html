@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uberview - Task Overview</title>
+    <style>
+        :root {
+            --bg-color: #1a1a2e;
+            --card-bg: #16213e;
+            --text-color: #eee;
+            --text-muted: #aaa;
+            --accent: #0f3460;
+            --success: #4ade80;
+            --error: #f87171;
+            --border: #2a2a4a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+
+        h1 {
+            margin-bottom: 2rem;
+            font-weight: 300;
+        }
+
+        .server-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid var(--border);
+        }
+
+        .server-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--text-muted);
+        }
+
+        .status-indicator.online {
+            background-color: var(--success);
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        .status-indicator.offline {
+            background-color: var(--error);
+            box-shadow: 0 0 10px var(--error);
+        }
+
+        .server-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .server-url {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .server-url a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+
+        .server-url a:hover {
+            text-decoration: underline;
+        }
+
+        .provider-type {
+            color: var(--accent);
+            font-size: 0.8rem;
+            margin-left: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .refresh-btn {
+            background: var(--accent);
+            color: var(--text-color);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: opacity 0.2s;
+        }
+
+        .refresh-btn:hover {
+            opacity: 0.8;
+        }
+
+        .refresh-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .issues-container {
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .issues-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .issues-count {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 1rem 1.5rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--accent);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .issue-title a {
+            color: var(--text-color);
+            text-decoration: none;
+        }
+
+        .issue-title a:hover {
+            text-decoration: underline;
+        }
+
+        .issue-id {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .issue-project {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .label {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            background: var(--accent);
+            margin-right: 0.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .labels-cell {
+            max-width: 200px;
+        }
+
+        .date-cell {
+            white-space: nowrap;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .empty-state {
+            padding: 3rem;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            gap: 0.5rem;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-top-color: var(--text-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            padding: 1rem 1.5rem;
+            background: rgba(248, 113, 113, 0.1);
+            border-left: 3px solid var(--error);
+            color: var(--error);
+        }
+    </style>
+</head>
+<body>
+    <h1>Uberview</h1>
+
+    <div class="server-card">
+        <div class="server-info">
+            <div class="status-indicator" id="status-indicator"></div>
+            <div>
+                <div class="server-name" id="server-name"></div>
+                <div class="server-url">
+                    <a href="#" target="_blank" id="server-url"></a>
+                    <span class="provider-type" id="provider-type"></span>
+                    <span id="status-text"></span>
+                </div>
+            </div>
+        </div>
+        <button class="refresh-btn" id="refresh-btn" onclick="refreshIssues()">
+            Refresh Issues
+        </button>
+    </div>
+
+    <div class="issues-container">
+        <div class="issues-header">
+            <h2>Open Issues</h2>
+            <span class="issues-count" id="issues-count"></span>
+        </div>
+        <div id="issues-content">
+            <div class="empty-state">
+                Click "Refresh Issues" to load your assigned issues
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check server status on page load
+        document.addEventListener('DOMContentLoaded', checkStatus);
+
+        async function checkStatus() {
+            const indicator = document.getElementById('status-indicator');
+            const statusText = document.getElementById('status-text');
+            const serverName = document.getElementById('server-name');
+            const serverUrl = document.getElementById('server-url');
+            const providerType = document.getElementById('provider-type');
+
+            try {
+                const response = await fetch('/api/status');
+                const status = await response.json();
+
+                // Update provider info
+                serverName.textContent = status.name;
+                serverUrl.textContent = status.url;
+                serverUrl.href = status.url;
+                providerType.textContent = '[' + status.type + ']';
+
+                if (status.online) {
+                    indicator.className = 'status-indicator online';
+                    statusText.textContent = ' - Online';
+                } else {
+                    indicator.className = 'status-indicator offline';
+                    statusText.textContent = ' - Offline';
+                }
+            } catch (error) {
+                indicator.className = 'status-indicator offline';
+                statusText.textContent = ' - Unreachable';
+            }
+        }
+
+        async function refreshIssues() {
+            const btn = document.getElementById('refresh-btn');
+            const content = document.getElementById('issues-content');
+            const count = document.getElementById('issues-count');
+
+            btn.disabled = true;
+            btn.textContent = 'Loading...';
+
+            content.innerHTML = '<div class="loading"><div class="spinner"></div> Fetching issues...</div>';
+
+            // Also refresh status
+            await checkStatus();
+
+            try {
+                const response = await fetch('/api/issues');
+                const data = await response.json();
+
+                if (data.error) {
+                    content.innerHTML = '<div class="error-message">Error: ' + escapeHtml(data.error) + '</div>';
+                    count.textContent = '';
+                    return;
+                }
+
+                if (!Array.isArray(data) || data.length === 0) {
+                    content.innerHTML = '<div class="empty-state">No open issues assigned to you</div>';
+                    count.textContent = '0 issues';
+                    return;
+                }
+
+                count.textContent = data.length + ' issue' + (data.length !== 1 ? 's' : '');
+                content.innerHTML = renderIssuesTable(data);
+
+            } catch (error) {
+                content.innerHTML = '<div class="error-message">Failed to fetch issues: ' + escapeHtml(error.message) + '</div>';
+                count.textContent = '';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Refresh Issues';
+            }
+        }
+
+        function renderIssuesTable(issues) {
+            let html = '<table>';
+            html += '<thead><tr>';
+            html += '<th>ID</th>';
+            html += '<th>Title</th>';
+            html += '<th>Project</th>';
+            html += '<th>Labels</th>';
+            html += '<th>Created</th>';
+            html += '<th>Updated</th>';
+            html += '</tr></thead>';
+            html += '<tbody>';
+
+            for (const issue of issues) {
+                const created = new Date(issue.created_at).toLocaleDateString();
+                const updated = new Date(issue.updated_at).toLocaleDateString();
+                const projectName = issue.project || 'Unknown';
+
+                html += '<tr>';
+                html += '<td class="issue-id">#' + issue.id + '</td>';
+                html += '<td class="issue-title"><a href="' + escapeHtml(issue.web_url) + '" target="_blank">' + escapeHtml(issue.title) + '</a></td>';
+                html += '<td class="issue-project">' + escapeHtml(projectName) + '</td>';
+                html += '<td class="labels-cell">' + renderLabels(issue.labels) + '</td>';
+                html += '<td class="date-cell">' + created + '</td>';
+                html += '<td class="date-cell">' + updated + '</td>';
+                html += '</tr>';
+            }
+
+            html += '</tbody></table>';
+            return html;
+        }
+
+        function renderLabels(labels) {
+            if (!labels || labels.length === 0) return '-';
+            return labels.map(label => '<span class="label">' + escapeHtml(label) + '</span>').join('');
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
