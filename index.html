@@ -7,6 +7,7 @@
     <title>Uberview - Task Overview</title>
     <style>
         :root {
+            /* Dark theme (default) */
             --bg-color: #1a1a2e;
             --card-bg: #16213e;
             --text-color: #eee;
@@ -17,6 +18,7 @@
             --success: #4ade80;
             --error: #f87171;
             --border: #2a2a4a;
+            --hover-bg: rgba(255, 255, 255, 0.02);
 
             /* Provider color palette (deterministic) */
             --provider-color-0: #3b82f6;
@@ -27,6 +29,22 @@
             --provider-color-5: #ec4899;
             --provider-color-6: #6366f1;
             --provider-color-7: #14b8a6;
+        }
+
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg-color: #f5f5f5;
+                --card-bg: #ffffff;
+                --text-color: #1a1a2e;
+                --text-muted: #666;
+                --accent: #e0e7ff;
+                --clickable: #2563eb;
+                --header-bg: #e0e7ff85;
+                --success: #22c55e;
+                --error: #ef4444;
+                --border: #e0e0e0;
+                --hover-bg: rgba(0, 0, 0, 0.02);
+            }
         }
 
         * {
@@ -227,7 +245,7 @@
         }
 
         tr:hover td {
-            background: rgba(255, 255, 255, 0.02);
+            background: var(--hover-bg);
         }
 
         .issue-title a {
