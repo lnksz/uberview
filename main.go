@@ -26,8 +26,9 @@ var faviconData []byte
 type TaskProviderType string
 
 const (
-	TaskProviderGitLab    TaskProviderType = "gitlab"
-	TaskProviderJiraCloud TaskProviderType = "jira_cloud"
+	TaskProviderGitLab     TaskProviderType = "gitlab"
+	TaskProviderJiraCloud  TaskProviderType = "jira_cloud"
+	TaskProviderJiraServer TaskProviderType = "jira_server"
 )
 
 // TaskProvider represents a task provider configuration
@@ -37,8 +38,9 @@ type TaskProvider struct {
 	URL   string           `yaml:"url"`
 	Token string           `yaml:"token"`
 	User  string           `yaml:"user"`
-	// Jira Cloud specific fields
-	Email string `yaml:"email"` // Required for Jira Cloud API authentication
+	// Jira specific fields
+	Email    string `yaml:"email"`    // Required for Jira Cloud API authentication
+	Password string `yaml:"password"` // Required for Jira Server API authentication (or use Token for PAT)
 }
 
 // Config represents the YAML configuration structure
@@ -73,12 +75,20 @@ type GitLabIssue struct {
 	} `json:"author"`
 }
 
-// JiraSearchResponse represents the Jira search API response
+// JiraSearchResponse represents the Jira Cloud search API response
 type JiraSearchResponse struct {
 	Total         int         `json:"total"`
 	Issues        []JiraIssue `json:"issues"`
 	IsLast        bool        `json:"isLast"`
 	NextPageToken string      `json:"nextPageToken"`
+}
+
+// JiraServerSearchResponse represents the Jira Server search API response (v2)
+type JiraServerSearchResponse struct {
+	StartAt    int         `json:"startAt"`
+	MaxResults int         `json:"maxResults"`
+	Total      int         `json:"total"`
+	Issues     []JiraIssue `json:"issues"`
 }
 
 // JiraIssue represents a Jira issue from the API
@@ -123,6 +133,7 @@ type ProviderStatus struct {
 	Type       string `json:"type"`
 	Online     bool   `json:"online"`
 	IssueCount int    `json:"issue_count"`
+	Error      string `json:"error,omitempty"`
 }
 
 // App holds the application state
@@ -167,6 +178,7 @@ func (a *App) checkProviderStatus(provider TaskProvider) ProviderStatus {
 		apiURL := fmt.Sprintf("%s/api/v4/version", provider.URL)
 		req, err := http.NewRequest("GET", apiURL, nil)
 		if err != nil {
+			status.Error = fmt.Sprintf("creating request: %v", err)
 			return status
 		}
 
@@ -174,16 +186,22 @@ func (a *App) checkProviderStatus(provider TaskProvider) ProviderStatus {
 
 		resp, err := a.client.Do(req)
 		if err != nil {
+			status.Error = fmt.Sprintf("connection failed: %v", err)
 			return status
 		}
 		defer resp.Body.Close()
 
-		status.Online = resp.StatusCode == http.StatusOK
+		if resp.StatusCode == http.StatusOK {
+			status.Online = true
+		} else {
+			status.Error = fmt.Sprintf("HTTP %d %s", resp.StatusCode, http.StatusText(resp.StatusCode))
+		}
 
 	case TaskProviderJiraCloud:
 		apiURL := fmt.Sprintf("%s/rest/api/3/myself", provider.URL)
 		req, err := http.NewRequest("GET", apiURL, nil)
 		if err != nil {
+			status.Error = fmt.Sprintf("creating request: %v", err)
 			return status
 		}
 
@@ -194,11 +212,49 @@ func (a *App) checkProviderStatus(provider TaskProvider) ProviderStatus {
 
 		resp, err := a.client.Do(req)
 		if err != nil {
+			status.Error = fmt.Sprintf("connection failed: %v", err)
 			return status
 		}
 		defer resp.Body.Close()
 
-		status.Online = resp.StatusCode == http.StatusOK
+		if resp.StatusCode == http.StatusOK {
+			status.Online = true
+		} else {
+			status.Error = fmt.Sprintf("HTTP %d %s", resp.StatusCode, http.StatusText(resp.StatusCode))
+		}
+
+	case TaskProviderJiraServer:
+		apiURL := fmt.Sprintf("%s/rest/api/2/myself", provider.URL)
+		req, err := http.NewRequest("GET", apiURL, nil)
+		if err != nil {
+			status.Error = fmt.Sprintf("creating request: %v", err)
+			return status
+		}
+
+		// Jira Server: use Bearer token for PAT, or Basic Auth for username:password
+		if provider.Token != "" {
+			req.Header.Set("Authorization", "Bearer "+provider.Token)
+		} else {
+			auth := base64.StdEncoding.EncodeToString([]byte(provider.User + ":" + provider.Password))
+			req.Header.Set("Authorization", "Basic "+auth)
+		}
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := a.client.Do(req)
+		if err != nil {
+			status.Error = fmt.Sprintf("connection failed: %v", err)
+			return status
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode == http.StatusOK {
+			status.Online = true
+		} else {
+			status.Error = fmt.Sprintf("HTTP %d %s", resp.StatusCode, http.StatusText(resp.StatusCode))
+		}
+
+	default:
+		status.Error = fmt.Sprintf("unsupported provider type: %s", provider.Type)
 	}
 
 	return status
@@ -242,6 +298,8 @@ func (a *App) fetchAllIssues() ([]Issue, []ProviderStatus, error) {
 				issues, err = a.fetchGitLabIssues(p)
 			case TaskProviderJiraCloud:
 				issues, err = a.fetchJiraCloudIssues(p)
+			case TaskProviderJiraServer:
+				issues, err = a.fetchJiraServerIssues(p)
 			default:
 				err = fmt.Errorf("unsupported task provider type: %s", p.Type)
 			}
@@ -415,6 +473,82 @@ func (a *App) fetchJiraCloudIssues(provider TaskProvider) ([]Issue, error) {
 	return allIssues, nil
 }
 
+// fetchJiraServerIssues fetches all open issues from Jira Server assigned to the configured user
+func (a *App) fetchJiraServerIssues(provider TaskProvider) ([]Issue, error) {
+	var allIssues []Issue
+	startAt := 0
+	maxResults := 100
+
+	for {
+		// JQL to find open issues assigned to the user (excluding Done status category)
+		jql := fmt.Sprintf("assignee = \"%s\" AND statusCategory != Done ORDER BY created ASC", provider.User)
+
+		params := url.Values{}
+		params.Set("jql", jql)
+		params.Set("startAt", fmt.Sprintf("%d", startAt))
+		params.Set("maxResults", fmt.Sprintf("%d", maxResults))
+		params.Set("fields", "summary,created,updated,issuetype,status,project,priority")
+
+		// Jira Server 8.20 uses API v2
+		apiURL := fmt.Sprintf("%s/rest/api/2/search?%s", provider.URL, params.Encode())
+		req, err := http.NewRequest("GET", apiURL, nil)
+		if err != nil {
+			return nil, fmt.Errorf("creating request: %w", err)
+		}
+
+		// Jira Server: use Bearer token for PAT, or Basic Auth for username:password
+		if provider.Token != "" {
+			req.Header.Set("Authorization", "Bearer "+provider.Token)
+		} else {
+			auth := base64.StdEncoding.EncodeToString([]byte(provider.User + ":" + provider.Password))
+			req.Header.Set("Authorization", "Basic "+auth)
+		}
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := a.client.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("fetching issues: %w", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("Jira Server API returned status %d", resp.StatusCode)
+		}
+
+		var searchResp JiraServerSearchResponse
+		if err := json.NewDecoder(resp.Body).Decode(&searchResp); err != nil {
+			return nil, fmt.Errorf("decoding issues: %w", err)
+		}
+
+		for _, ji := range searchResp.Issues {
+			// Parse Jira date format (2024-01-15T10:30:00.000+0000)
+			createdAt, _ := time.Parse("2006-01-02T15:04:05.000-0700", ji.Fields.Created)
+			updatedAt, _ := time.Parse("2006-01-02T15:04:05.000-0700", ji.Fields.Updated)
+
+			// Construct the web URL for the issue
+			webURL := fmt.Sprintf("%s/browse/%s", provider.URL, ji.Key)
+
+			issue := Issue{
+				Source:    provider.Name,
+				Title:     ji.Fields.Summary,
+				WebURL:    webURL,
+				Priority:  ji.Fields.Priority.Name,
+				CreatedAt: createdAt,
+				UpdatedAt: updatedAt,
+			}
+			allIssues = append(allIssues, issue)
+		}
+
+		// Check if there are more pages using offset-based pagination
+		if startAt+len(searchResp.Issues) >= searchResp.Total {
+			break
+		}
+		startAt += maxResults
+	}
+
+	return allIssues, nil
+}
+
 // handleIndex serves the main HTML page
 func (a *App) handleIndex(w http.ResponseWriter, r *http.Request) {
 	data, err := staticFiles.ReadFile("index.html")
@@ -501,6 +635,8 @@ func (a *App) handleProviderIssues(w http.ResponseWriter, r *http.Request) {
 		issues, fetchErr = a.fetchGitLabIssues(*provider)
 	case TaskProviderJiraCloud:
 		issues, fetchErr = a.fetchJiraCloudIssues(*provider)
+	case TaskProviderJiraServer:
+		issues, fetchErr = a.fetchJiraServerIssues(*provider)
 	default:
 		fetchErr = fmt.Errorf("unsupported task provider type: %s", provider.Type)
 	}
@@ -553,6 +689,17 @@ func main() {
 		},
 	}
 
+	// Check provider status at startup
+	log.Printf("Configured %d task provider(s), checking connectivity...", len(config.TaskProviders))
+	statuses := app.checkAllProvidersStatus()
+	for _, status := range statuses {
+		if status.Online {
+			log.Printf("  - %s (%s) [%s]: OK", status.Name, status.URL, status.Type)
+		} else {
+			log.Printf("  - %s (%s) [%s]: OFFLINE - %s", status.Name, status.URL, status.Type, status.Error)
+		}
+	}
+
 	// Setup routes
 	http.HandleFunc("/", app.handleIndex)
 	http.HandleFunc("/favicon.ico", app.handleFavicon)
@@ -563,10 +710,6 @@ func main() {
 	// Start server
 	addr := fmt.Sprintf(":%d", config.Server.Port)
 	log.Printf("Starting server on http://localhost%s", addr)
-	log.Printf("Configured %d task provider(s):", len(config.TaskProviders))
-	for _, p := range config.TaskProviders {
-		log.Printf("  - %s (%s) [%s]", p.Name, p.URL, p.Type)
-	}
 
 	if err := http.ListenAndServe(addr, nil); err != nil {
 		log.Fatalf("Server failed: %v", err)

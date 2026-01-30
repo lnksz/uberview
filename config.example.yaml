@@ -15,13 +15,24 @@ task_providers:
 
   # Jira Cloud example
   - type: "jira_cloud"
-    name: "Jira"
+    name: "Jira Cloud"
     url: "https://your-company.atlassian.net"
     token: "your-jira-api-token"
     email: "your-email@company.com"
     user: "your-email@company.com"
 
+  # Jira Server example (v8.20+)
+  - type: "jira_server"
+    name: "Jira Server"
+    url: "https://jira.your-company.com"
+    user: "your-username"
+    password: "your-password"
+    # Or use a Personal Access Token instead of password:
+    # token: "your-jira-pat"
+
 # Notes:
 # - GitLab: token is a Personal Access Token with 'read_api' scope
 # - Jira Cloud: token is an API token (https://id.atlassian.com/manage-profile/security/api-tokens)
 #   email is your Atlassian account email, user is typically the same as email
+# - Jira Server: uses username/password or Personal Access Token (PAT) for authentication
+#   If both password and token are provided, password takes precedence
