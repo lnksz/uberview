@@ -30,69 +30,15 @@
             padding: 2rem;
         }
 
-        h1 {
-            margin-bottom: 2rem;
-            font-weight: 300;
-        }
-
-        .server-card {
-            background: var(--card-bg);
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
+        .header {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            border: 1px solid var(--border);
-        }
-
-        .server-info {
-            display: flex;
             align-items: center;
-            gap: 1rem;
+            margin-bottom: 2rem;
         }
 
-        .status-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background-color: var(--text-muted);
-        }
-
-        .status-indicator.online {
-            background-color: var(--success);
-            box-shadow: 0 0 10px var(--success);
-        }
-
-        .status-indicator.offline {
-            background-color: var(--error);
-            box-shadow: 0 0 10px var(--error);
-        }
-
-        .server-name {
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-
-        .server-url {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        .server-url a {
-            color: var(--text-muted);
-            text-decoration: none;
-        }
-
-        .server-url a:hover {
-            text-decoration: underline;
-        }
-
-        .provider-type {
-            color: var(--accent);
-            font-size: 0.8rem;
-            margin-left: 0.5rem;
-            text-transform: uppercase;
+        h1 {
+            font-weight: 300;
         }
 
         .refresh-btn {
@@ -113,6 +59,108 @@
         .refresh-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+        }
+
+        .providers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .provider-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .provider-refresh-btn {
+            background: var(--accent);
+            color: var(--text-color);
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: opacity 0.2s;
+            flex-shrink: 0;
+        }
+
+        .provider-refresh-btn:hover {
+            opacity: 0.8;
+        }
+
+        .provider-refresh-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .status-indicator.online {
+            background-color: var(--success);
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        .status-indicator.offline {
+            background-color: var(--error);
+            box-shadow: 0 0 10px var(--error);
+        }
+
+        .provider-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .provider-name {
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .task-count {
+            font-weight: 400;
+            font-size: 0.8rem;
+            color: var(--text-color);
+            background: var(--accent);
+            padding: 0.1rem 0.4rem;
+            border-radius: 8px;
+        }
+
+        .provider-url {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .provider-url a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+
+        .provider-url a:hover {
+            text-decoration: underline;
+        }
+
+        .provider-type {
+            color: var(--accent);
+            font-size: 0.75rem;
+            margin-left: 0.25rem;
+            text-transform: uppercase;
         }
 
         .issues-container {
@@ -231,23 +279,17 @@
     </style>
 </head>
 <body>
-    <h1>Uberview</h1>
+    <div class="header">
+        <h1>Uberview</h1>
+    </div>
 
-    <div class="server-card">
-        <div class="server-info">
-            <div class="status-indicator" id="status-indicator"></div>
-            <div>
-                <div class="server-name" id="server-name"></div>
-                <div class="server-url">
-                    <a href="#" target="_blank" id="server-url"></a>
-                    <span class="provider-type" id="provider-type"></span>
-                    <span id="status-text"></span>
-                </div>
+    <div class="providers-grid" id="providers-grid">
+        <div class="provider-card">
+            <div class="status-indicator"></div>
+            <div class="provider-info">
+                <div class="provider-name">Loading providers...</div>
             </div>
         </div>
-        <button class="refresh-btn" id="refresh-btn" onclick="refreshIssues()">
-            Refresh Issues
-        </button>
     </div>
 
     <div class="issues-container">
@@ -257,7 +299,7 @@
         </div>
         <div id="issues-content">
             <div class="empty-state">
-                Click "Refresh Issues" to load your assigned issues
+                Click "Refresh" on a provider to load issues
             </div>
         </div>
     </div>
@@ -267,74 +309,112 @@
         document.addEventListener('DOMContentLoaded', checkStatus);
 
         async function checkStatus() {
-            const indicator = document.getElementById('status-indicator');
-            const statusText = document.getElementById('status-text');
-            const serverName = document.getElementById('server-name');
-            const serverUrl = document.getElementById('server-url');
-            const providerType = document.getElementById('provider-type');
+            const grid = document.getElementById('providers-grid');
 
             try {
                 const response = await fetch('/api/status');
-                const status = await response.json();
+                const statuses = await response.json();
 
-                // Update provider info
-                serverName.textContent = status.name;
-                serverUrl.textContent = status.url;
-                serverUrl.href = status.url;
-                providerType.textContent = '[' + status.type + ']';
-
-                if (status.online) {
-                    indicator.className = 'status-indicator online';
-                    statusText.textContent = ' - Online';
-                } else {
-                    indicator.className = 'status-indicator offline';
-                    statusText.textContent = ' - Offline';
+                if (!Array.isArray(statuses) || statuses.length === 0) {
+                    grid.innerHTML = '<div class="provider-card"><div class="provider-info"><div class="provider-name">No providers configured</div></div></div>';
+                    return;
                 }
+
+                grid.innerHTML = statuses.map(status => renderProviderCard(status)).join('');
             } catch (error) {
-                indicator.className = 'status-indicator offline';
-                statusText.textContent = ' - Unreachable';
+                grid.innerHTML = '<div class="provider-card"><div class="status-indicator offline"></div><div class="provider-info"><div class="provider-name">Failed to load providers</div></div></div>';
             }
         }
 
-        async function refreshIssues() {
-            const btn = document.getElementById('refresh-btn');
+        function renderProviderCard(status) {
+            const statusClass = status.online ? 'online' : 'offline';
+            const countBadge = status.issue_count > 0 ? `<span class="task-count">${status.issue_count}</span>` : '';
+
+            return `
+                <div class="provider-card" data-provider="${escapeHtml(status.name)}">
+                    <div class="status-indicator ${statusClass}"></div>
+                    <div class="provider-info">
+                        <div class="provider-name">
+                            ${escapeHtml(status.name)}
+                            ${countBadge}
+                        </div>
+                        <div class="provider-url">
+                            <a href="${escapeHtml(status.url)}" target="_blank">${escapeHtml(status.url)}</a>
+                            <span class="provider-type">[${escapeHtml(status.type)}]</span>
+                        </div>
+                    </div>
+                    <button class="provider-refresh-btn" onclick="refreshProvider('${escapeHtml(status.name)}')">
+                        Refresh
+                    </button>
+                </div>
+            `;
+        }
+
+        // Store issues by provider for aggregation
+        let issuesByProvider = {};
+
+        async function refreshProvider(providerName) {
+            const card = document.querySelector(`.provider-card[data-provider="${providerName}"]`);
+            const btn = card.querySelector('.provider-refresh-btn');
             const content = document.getElementById('issues-content');
             const count = document.getElementById('issues-count');
 
             btn.disabled = true;
             btn.textContent = 'Loading...';
 
-            content.innerHTML = '<div class="loading"><div class="spinner"></div> Fetching issues...</div>';
-
-            // Also refresh status
-            await checkStatus();
-
             try {
-                const response = await fetch('/api/issues');
+                const response = await fetch('/api/provider/' + encodeURIComponent(providerName) + '/issues');
                 const data = await response.json();
 
-                if (data.error) {
-                    content.innerHTML = '<div class="error-message">Error: ' + escapeHtml(data.error) + '</div>';
-                    count.textContent = '';
-                    return;
+                // Update the provider card status
+                const statusIndicator = card.querySelector('.status-indicator');
+                statusIndicator.className = 'status-indicator ' + (data.status.online ? 'online' : 'offline');
+
+                const providerNameEl = card.querySelector('.provider-name');
+                const countBadge = data.status.issue_count > 0 ? `<span class="task-count">${data.status.issue_count}</span>` : '';
+                providerNameEl.innerHTML = `${escapeHtml(data.status.name)} ${countBadge}`;
+
+                // Store issues for this provider
+                if (data.issues && data.issues.length > 0) {
+                    issuesByProvider[providerName] = data.issues;
+                } else if (data.error) {
+                    // Keep old issues if there was an error, show error message
+                    console.error('Error fetching from', providerName, ':', data.error);
+                } else {
+                    issuesByProvider[providerName] = [];
                 }
 
-                if (!Array.isArray(data) || data.length === 0) {
-                    content.innerHTML = '<div class="empty-state">No open issues assigned to you</div>';
-                    count.textContent = '0 issues';
-                    return;
-                }
-
-                count.textContent = data.length + ' issue' + (data.length !== 1 ? 's' : '');
-                content.innerHTML = renderIssuesTable(data);
+                // Render all issues from all providers
+                renderAllIssues();
 
             } catch (error) {
-                content.innerHTML = '<div class="error-message">Failed to fetch issues: ' + escapeHtml(error.message) + '</div>';
-                count.textContent = '';
+                console.error('Failed to fetch issues from', providerName, ':', error);
+                const statusIndicator = card.querySelector('.status-indicator');
+                statusIndicator.className = 'status-indicator offline';
             } finally {
                 btn.disabled = false;
-                btn.textContent = 'Refresh Issues';
+                btn.textContent = 'Refresh';
             }
+        }
+
+        function renderAllIssues() {
+            const content = document.getElementById('issues-content');
+            const countEl = document.getElementById('issues-count');
+
+            // Combine all issues from all providers
+            let allIssues = [];
+            for (const issues of Object.values(issuesByProvider)) {
+                allIssues = allIssues.concat(issues);
+            }
+
+            if (allIssues.length === 0) {
+                content.innerHTML = '<div class="empty-state">No open issues. Click "Refresh" on a provider to load issues.</div>';
+                countEl.textContent = '0 issues';
+                return;
+            }
+
+            countEl.textContent = allIssues.length + ' issue' + (allIssues.length !== 1 ? 's' : '');
+            content.innerHTML = renderIssuesTable(allIssues);
         }
 
         function renderIssuesTable(issues) {

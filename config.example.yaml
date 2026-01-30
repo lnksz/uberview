@@ -3,9 +3,25 @@
 server:
   port: 8080
 
-task_provider:
-  type: "gitlab"  # Currently supported: gitlab
-  name: "GitLab"
-  url: "https://gitlab.com"
-  token: "your-gitlab-personal-access-token"
-  user: "your-username"
+# Configure one or more task providers
+# Issues from all providers are fetched concurrently and displayed together
+task_providers:
+  # GitLab example
+  - type: "gitlab"
+    name: "GitLab"
+    url: "https://gitlab.com"
+    token: "your-gitlab-personal-access-token"
+    user: "your-username"
+
+  # Jira Cloud example
+  - type: "jira_cloud"
+    name: "Jira"
+    url: "https://your-company.atlassian.net"
+    token: "your-jira-api-token"
+    email: "your-email@company.com"
+    user: "your-email@company.com"
+
+# Notes:
+# - GitLab: token is a Personal Access Token with 'read_api' scope
+# - Jira Cloud: token is an API token (https://id.atlassian.com/manage-profile/security/api-tokens)
+#   email is your Atlassian account email, user is typically the same as email
