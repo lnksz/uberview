@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <title>Uberview - Task Overview</title>
     <style>
         :root {
@@ -262,6 +263,12 @@
             font-size: 0.9rem;
         }
 
+        .issue-priority {
+            white-space: nowrap;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
         .empty-state {
             padding: 3rem;
             text-align: center;
@@ -467,6 +474,7 @@
             html += '<th>Source</th>';
             html += '<th>Ref</th>';
             html += '<th>Title</th>';
+            html += '<th>Priority</th>';
             html += '<th>Created</th>';
             html += '<th>Updated</th>';
             html += '</tr></thead>';
@@ -477,11 +485,13 @@
                 const updated = new Date(issue.updated_at).toLocaleDateString();
                 const urlPath = getUrlPath(issue.web_url);
                 const color = getProviderColor(issue.source);
+                const priority = issue.priority || '';
 
                 html += `<tr style="border-left: 4px solid ${color};">`;
                 html += '<td class="issue-source">' + escapeHtml(issue.source) + '</td>';
                 html += '<td class="issue-ref"><a href="' + escapeHtml(issue.web_url) + '" target="_blank">' + escapeHtml(urlPath) + '</a></td>';
                 html += '<td class="issue-title"><a href="' + escapeHtml(issue.web_url) + '" target="_blank">' + escapeHtml(issue.title) + '</a></td>';
+                html += '<td class="issue-priority">' + escapeHtml(priority) + '</td>';
                 html += '<td class="date-cell">' + created + '</td>';
                 html += '<td class="date-cell">' + updated + '</td>';
                 html += '</tr>';

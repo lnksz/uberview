@@ -19,6 +19,9 @@ import (
 //go:embed index.html
 var staticFiles embed.FS
 
+//go:embed favicon.ico
+var faviconData []byte
+
 // TaskProviderType represents the type of task provider
 type TaskProviderType string
 
@@ -97,6 +100,9 @@ type JiraIssue struct {
 			Key  string `json:"key"`
 			Name string `json:"name"`
 		} `json:"project"`
+		Priority struct {
+			Name string `json:"name"`
+		} `json:"priority"`
 	} `json:"fields"`
 }
 
@@ -105,6 +111,7 @@ type Issue struct {
 	Source    string    `json:"source"`
 	Title     string    `json:"title"`
 	WebURL    string    `json:"web_url"`
+	Priority  string    `json:"priority,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -347,7 +354,7 @@ func (a *App) fetchJiraCloudIssues(provider TaskProvider) ([]Issue, error) {
 		params := url.Values{}
 		params.Set("jql", jql)
 		params.Set("maxResults", fmt.Sprintf("%d", maxResults))
-		params.Set("fields", "summary,created,updated,issuetype,status,project")
+		params.Set("fields", "summary,created,updated,issuetype,status,project,priority")
 		if nextPageToken != "" {
 			params.Set("nextPageToken", nextPageToken)
 		}
@@ -391,6 +398,7 @@ func (a *App) fetchJiraCloudIssues(provider TaskProvider) ([]Issue, error) {
 				Source:    provider.Name,
 				Title:     ji.Fields.Summary,
 				WebURL:    webURL,
+				Priority:  ji.Fields.Priority.Name,
 				CreatedAt: createdAt,
 				UpdatedAt: updatedAt,
 			}
@@ -416,6 +424,12 @@ func (a *App) handleIndex(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Write(data)
+}
+
+// handleFavicon serves the favicon
+func (a *App) handleFavicon(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "image/x-icon")
+	w.Write(faviconData)
 }
 
 // handleStatus returns the task providers server status as JSON
@@ -541,6 +555,7 @@ func main() {
 
 	// Setup routes
 	http.HandleFunc("/", app.handleIndex)
+	http.HandleFunc("/favicon.ico", app.handleFavicon)
 	http.HandleFunc("/api/status", app.handleStatus)
 	http.HandleFunc("/api/issues", app.handleIssues)
 	http.HandleFunc("/api/provider/", app.handleProviderIssues)
