@@ -23,6 +23,50 @@ go build -o uberview .
 
 Access the dashboard at `http://localhost:8080`
 
+## Running with systemd
+
+This repo ships a sample unit file at `systemd/uberview.service`.
+
+This is intended to run as a user service (no root required).
+
+1) Build and install the binary:
+
+```bash
+go build -o uberview .
+install -d -m 0755 ~/.local/bin
+install -m 0755 uberview ~/.local/bin/uberview
+```
+
+2) Install config:
+
+```bash
+mkdir -p ~/.config/uberview
+install -m 0640 config.yaml ~/.config/uberview/config.yaml
+```
+
+3) Install and start the service:
+
+```bash
+mkdir -p ~/.config/systemd/user
+install -m 0644 systemd/uberview.service ~/.config/systemd/user/uberview.service
+systemctl --user daemon-reload
+systemctl --user enable --now uberview
+```
+
+If your systemd/user setup does not allow capability dropping or unprivileged namespacing, you may need to use the provided unit as-is (it avoids those features). If you still hit errors like `status=218/CAPABILITIES`, remove hardening lines such as `SystemCallFilter=`, `SystemCallArchitectures=`, `RestrictSUIDSGID=`, `LockPersonality=`, and `MemoryDenyWriteExecute=` from your user unit.
+
+Logs:
+
+```bash
+journalctl --user -u uberview -f
+```
+
+To keep it running after logout:
+
+```bash
+sudo loginctl enable-linger "$USER"
+```
+
 ## Configuration
 
 See `config.example.yaml` for an example configuration file (maintained).
