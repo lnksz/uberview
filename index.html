@@ -490,8 +490,21 @@
         }
 
         function renderIssuesTable(issues) {
-            // Sort by created date, descending
-            issues.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            // Sort by due date, ascending (no due date last)
+            issues.sort((a, b) => {
+                const ad = a.due_at ? new Date(a.due_at) : null;
+                const bd = b.due_at ? new Date(b.due_at) : null;
+
+                if (!ad && !bd) {
+                    return new Date(a.created_at) - new Date(b.created_at);
+                }
+                if (!ad) return 1;
+                if (!bd) return -1;
+
+                const diff = ad - bd;
+                if (diff !== 0) return diff;
+                return new Date(a.created_at) - new Date(b.created_at);
+            });
 
             let html = '<table>';
             html += '<thead><tr>';
@@ -500,14 +513,16 @@
             html += '<th>Title</th>';
             html += '<th>Status</th>';
             html += '<th>Priority</th>';
+            html += '<th>Due</th>';
             html += '<th>Created</th>';
             html += '<th>Updated</th>';
             html += '</tr></thead>';
             html += '<tbody>';
 
             for (const issue of issues) {
-                const created = new Date(issue.created_at).toLocaleDateString();
-                const updated = new Date(issue.updated_at).toLocaleDateString();
+                const created = formatISODate(issue.created_at);
+                const updated = formatISODate(issue.updated_at);
+                const due = formatISODate(issue.due_at);
                 const urlPath = getUrlPath(issue.web_url);
                 const color = getProviderColor(issue.source);
                 const status = issue.status || '';
@@ -519,6 +534,7 @@
                 html += '<td class="issue-title"><a href="' + escapeHtml(issue.web_url) + '" target="_blank">' + escapeHtml(issue.title) + '</a></td>';
                 html += '<td class="issue-status">' + escapeHtml(status) + '</td>';
                 html += '<td class="issue-priority">' + escapeHtml(priority) + '</td>';
+                html += '<td class="date-cell">' + escapeHtml(due) + '</td>';
                 html += '<td class="date-cell">' + created + '</td>';
                 html += '<td class="date-cell">' + updated + '</td>';
                 html += '</tr>';
@@ -534,6 +550,21 @@
                 return parsed.pathname;
             } catch {
                 return url;
+            }
+        }
+
+        function formatISODate(dateStr) {
+            if (!dateStr) return '';
+            if (typeof dateStr === 'string' && dateStr.length >= 10) {
+                // Go time.Time JSON is RFC3339; the leading date is already YYYY-MM-DD.
+                return dateStr.slice(0, 10);
+            }
+            try {
+                const d = new Date(dateStr);
+                if (Number.isNaN(d.getTime())) return '';
+                return d.toISOString().slice(0, 10);
+            } catch {
+                return '';
             }
         }
 

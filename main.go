@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -61,6 +62,7 @@ type GitLabIssue struct {
 	WebURL      string    `json:"web_url"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
+	DueDate     *string   `json:"due_date"`
 	Labels      []string  `json:"labels"`
 	Type        string    `json:"type"`
 	IssueType   string    `json:"issue_type"`
@@ -100,6 +102,7 @@ type JiraIssue struct {
 		Summary   string `json:"summary"`
 		Created   string `json:"created"`
 		Updated   string `json:"updated"`
+		DueDate   string `json:"duedate"`
 		IssueType struct {
 			Name string `json:"name"`
 		} `json:"issuetype"`
@@ -118,13 +121,34 @@ type JiraIssue struct {
 
 // Issue represents a generic issue from any task provider
 type Issue struct {
-	Source    string    `json:"source"`
-	Title     string    `json:"title"`
-	WebURL    string    `json:"web_url"`
-	Status    string    `json:"status,omitempty"`
-	Priority  string    `json:"priority,omitempty"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Source    string     `json:"source"`
+	Title     string     `json:"title"`
+	WebURL    string     `json:"web_url"`
+	Status    string     `json:"status,omitempty"`
+	Priority  string     `json:"priority,omitempty"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
+	DueAt     *time.Time `json:"due_at,omitempty"`
+}
+
+func sortIssuesDefault(issues []Issue) {
+	// Default order: due date ascending; issues without a due date last.
+	sort.SliceStable(issues, func(i, j int) bool {
+		di, dj := issues[i].DueAt, issues[j].DueAt
+		if di == nil && dj == nil {
+			return issues[i].CreatedAt.Before(issues[j].CreatedAt)
+		}
+		if di == nil {
+			return false
+		}
+		if dj == nil {
+			return true
+		}
+		if di.Equal(*dj) {
+			return issues[i].CreatedAt.Before(issues[j].CreatedAt)
+		}
+		return di.Before(*dj)
+	})
 }
 
 // ProviderStatus represents the task provider server status
@@ -381,6 +405,13 @@ func (a *App) fetchGitLabIssues(provider TaskProvider) ([]Issue, error) {
 		}
 
 		for _, gi := range gitlabIssues {
+			var dueAt *time.Time
+			if gi.DueDate != nil && *gi.DueDate != "" {
+				if t, err := time.Parse("2006-01-02", *gi.DueDate); err == nil {
+					dueAt = &t
+				}
+			}
+
 			issue := Issue{
 				Source:    provider.Name,
 				Title:     gi.Title,
@@ -388,6 +419,7 @@ func (a *App) fetchGitLabIssues(provider TaskProvider) ([]Issue, error) {
 				Status:    gi.State,
 				CreatedAt: gi.CreatedAt,
 				UpdatedAt: gi.UpdatedAt,
+				DueAt:     dueAt,
 			}
 			allIssues = append(allIssues, issue)
 		}
@@ -414,7 +446,7 @@ func (a *App) fetchJiraCloudIssues(provider TaskProvider) ([]Issue, error) {
 		params := url.Values{}
 		params.Set("jql", jql)
 		params.Set("maxResults", fmt.Sprintf("%d", maxResults))
-		params.Set("fields", "summary,created,updated,issuetype,status,project,priority")
+		params.Set("fields", "summary,created,updated,duedate,issuetype,status,project,priority")
 		if nextPageToken != "" {
 			params.Set("nextPageToken", nextPageToken)
 		}
@@ -451,6 +483,13 @@ func (a *App) fetchJiraCloudIssues(provider TaskProvider) ([]Issue, error) {
 			createdAt, _ := time.Parse("2006-01-02T15:04:05.000-0700", ji.Fields.Created)
 			updatedAt, _ := time.Parse("2006-01-02T15:04:05.000-0700", ji.Fields.Updated)
 
+			var dueAt *time.Time
+			if ji.Fields.DueDate != "" {
+				if t, err := time.Parse("2006-01-02", ji.Fields.DueDate); err == nil {
+					dueAt = &t
+				}
+			}
+
 			// Construct the web URL for the issue
 			webURL := fmt.Sprintf("%s/browse/%s", provider.URL, ji.Key)
 
@@ -462,6 +501,7 @@ func (a *App) fetchJiraCloudIssues(provider TaskProvider) ([]Issue, error) {
 				Priority:  ji.Fields.Priority.Name,
 				CreatedAt: createdAt,
 				UpdatedAt: updatedAt,
+				DueAt:     dueAt,
 			}
 			allIssues = append(allIssues, issue)
 		}
@@ -490,7 +530,7 @@ func (a *App) fetchJiraServerIssues(provider TaskProvider) ([]Issue, error) {
 		params.Set("jql", jql)
 		params.Set("startAt", fmt.Sprintf("%d", startAt))
 		params.Set("maxResults", fmt.Sprintf("%d", maxResults))
-		params.Set("fields", "summary,created,updated,issuetype,status,project,priority")
+		params.Set("fields", "summary,created,updated,duedate,issuetype,status,project,priority")
 
 		// Jira Server 8.20 uses API v2
 		apiURL := fmt.Sprintf("%s/rest/api/2/search?%s", provider.URL, params.Encode())
@@ -528,6 +568,13 @@ func (a *App) fetchJiraServerIssues(provider TaskProvider) ([]Issue, error) {
 			createdAt, _ := time.Parse("2006-01-02T15:04:05.000-0700", ji.Fields.Created)
 			updatedAt, _ := time.Parse("2006-01-02T15:04:05.000-0700", ji.Fields.Updated)
 
+			var dueAt *time.Time
+			if ji.Fields.DueDate != "" {
+				if t, err := time.Parse("2006-01-02", ji.Fields.DueDate); err == nil {
+					dueAt = &t
+				}
+			}
+
 			// Construct the web URL for the issue
 			webURL := fmt.Sprintf("%s/browse/%s", provider.URL, ji.Key)
 
@@ -539,6 +586,7 @@ func (a *App) fetchJiraServerIssues(provider TaskProvider) ([]Issue, error) {
 				Priority:  ji.Fields.Priority.Name,
 				CreatedAt: createdAt,
 				UpdatedAt: updatedAt,
+				DueAt:     dueAt,
 			}
 			allIssues = append(allIssues, issue)
 		}
@@ -580,6 +628,7 @@ func (a *App) handleStatus(w http.ResponseWriter, r *http.Request) {
 // handleIssues returns the issues as JSON
 func (a *App) handleIssues(w http.ResponseWriter, r *http.Request) {
 	issues, statuses, err := a.fetchAllIssues()
+	sortIssuesDefault(issues)
 
 	response := struct {
 		Issues   []Issue          `json:"issues"`
@@ -644,6 +693,8 @@ func (a *App) handleProviderIssues(w http.ResponseWriter, r *http.Request) {
 	default:
 		fetchErr = fmt.Errorf("unsupported task provider type: %s", provider.Type)
 	}
+
+	sortIssuesDefault(issues)
 
 	status := ProviderStatus{
 		Name:       provider.Name,
