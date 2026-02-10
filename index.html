@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <title>Uberview - Task Overview</title>
-    <style>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="icon" type="image/x-icon" href="/favicon.ico">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" />
+        <title>Uberview - Task Overview</title>
+        <style>
         :root {
             /* Dark theme (default) */
             --bg-color: #1a1a2e;
@@ -240,6 +241,46 @@
             letter-spacing: 0.05em;
         }
 
+        .th-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .sort-btn {
+            appearance: none;
+            background: transparent;
+            border: none;
+            padding: 0;
+            margin: 0;
+            cursor: pointer;
+            color: var(--text-muted);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sort-btn:hover {
+            color: var(--text-color);
+        }
+
+        .sort-btn:focus-visible {
+            outline: 2px solid var(--clickable);
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings:
+                'FILL' 0,
+                'wght' 400,
+                'GRAD' 0,
+                'opsz' 20;
+            font-size: 18px;
+            line-height: 1;
+            user-select: none;
+        }
+
         tr:last-child td {
             border-bottom: none;
         }
@@ -425,6 +466,98 @@
         // Store issues by provider for aggregation
         let issuesByProvider = {};
 
+        // Sort state (UI). Default is Due ascending.
+        // If the user turns sorting "off", we still apply the default ordering (due ASC).
+        let sortState = { key: 'due', dir: 'asc' };
+
+        function getSortIcon(dir) {
+            if (dir === 'desc') return 'arrow_downward';
+            if (dir === 'asc') return 'arrow_upward';
+            return 'filter_list_off';
+        }
+
+        function nextSortDir(dir) {
+            if (dir === 'off') return 'desc';
+            if (dir === 'desc') return 'asc';
+            return 'off';
+        }
+
+        function toggleSort(key) {
+            if (sortState.key !== key) {
+                sortState = { key, dir: 'desc' };
+            } else {
+                const dir = nextSortDir(sortState.dir);
+                if (dir === 'off') {
+                    sortState = { key: null, dir: 'off' };
+                } else {
+                    sortState = { key, dir };
+                }
+            }
+            renderAllIssues();
+        }
+
+        function sortIssuesInPlace(issues) {
+            const activeKey = sortState.dir === 'off' ? 'due' : sortState.key;
+            const activeDir = sortState.dir === 'off' ? 'asc' : sortState.dir;
+
+            const withIdx = issues.map((issue, idx) => ({ issue, idx }));
+
+            withIdx.sort((a, b) => {
+                const ia = a.issue;
+                const ib = b.issue;
+
+                let cmp = 0;
+                if (activeKey === 'priority') {
+                    const pa = (ia.priority || '').trim();
+                    const pb = (ib.priority || '').trim();
+                    if (!pa && !pb) {
+                        cmp = 0;
+                    } else if (!pa) {
+                        cmp = 1;
+                    } else if (!pb) {
+                        cmp = -1;
+                    } else {
+                        cmp = pa.toLowerCase().localeCompare(pb.toLowerCase());
+                    }
+
+                    if (cmp !== 0 && activeDir === 'desc') cmp = -cmp;
+                } else {
+                    const field = activeKey === 'created' ? 'created_at' : (activeKey === 'updated' ? 'updated_at' : 'due_at');
+                    const da = ia[field] ? new Date(ia[field]) : null;
+                    const db = ib[field] ? new Date(ib[field]) : null;
+
+                    if (!da && !db) {
+                        cmp = 0;
+                    } else if (!da || Number.isNaN(da.getTime())) {
+                        cmp = 1;
+                    } else if (!db || Number.isNaN(db.getTime())) {
+                        cmp = -1;
+                    } else {
+                        cmp = da - db;
+                        if (cmp !== 0 && activeDir === 'desc') cmp = -cmp;
+                    }
+                }
+
+                if (cmp !== 0) return cmp;
+
+                // Default tie-breaker: created ASC (then original order).
+                const ca = ia.created_at ? new Date(ia.created_at) : null;
+                const cb = ib.created_at ? new Date(ib.created_at) : null;
+                const ta = ca && !Number.isNaN(ca.getTime()) ? ca.getTime() : 0;
+                const tb = cb && !Number.isNaN(cb.getTime()) ? cb.getTime() : 0;
+                if (ta !== tb) return ta - tb;
+                return a.idx - b.idx;
+            });
+
+            issues.splice(0, issues.length, ...withIdx.map(x => x.issue));
+        }
+
+        function renderSortableHeader(label, key) {
+            const dir = (sortState.key === key) ? sortState.dir : 'off';
+            const icon = getSortIcon(dir);
+            return `<th><span class="th-label">${escapeHtml(label)}<button class="sort-btn" type="button" aria-label="Sort by ${escapeHtml(label)}" onclick="toggleSort('${key}')"><span class="material-symbols-outlined">${icon}</span></button></span></th>`;
+        }
+
         async function refreshProvider(providerName) {
             const card = document.querySelector(`.provider-card[data-provider="${providerName}"]`);
             const btn = card.querySelector('.provider-refresh-btn');
@@ -490,21 +623,7 @@
         }
 
         function renderIssuesTable(issues) {
-            // Sort by due date, ascending (no due date last)
-            issues.sort((a, b) => {
-                const ad = a.due_at ? new Date(a.due_at) : null;
-                const bd = b.due_at ? new Date(b.due_at) : null;
-
-                if (!ad && !bd) {
-                    return new Date(a.created_at) - new Date(b.created_at);
-                }
-                if (!ad) return 1;
-                if (!bd) return -1;
-
-                const diff = ad - bd;
-                if (diff !== 0) return diff;
-                return new Date(a.created_at) - new Date(b.created_at);
-            });
+            sortIssuesInPlace(issues);
 
             let html = '<table>';
             html += '<thead><tr>';
@@ -512,17 +631,18 @@
             html += '<th>Ref</th>';
             html += '<th>Title</th>';
             html += '<th>Status</th>';
-            html += '<th>Priority</th>';
-            html += '<th>Due</th>';
-            html += '<th>Created</th>';
-            html += '<th>Updated</th>';
+            html += renderSortableHeader('Priority', 'priority');
+            html += renderSortableHeader('Due', 'due');
+            html += renderSortableHeader('Created', 'created');
+            html += renderSortableHeader('Updated', 'updated');
             html += '</tr></thead>';
             html += '<tbody>';
 
             for (const issue of issues) {
                 const created = formatISODate(issue.created_at);
                 const updated = formatISODate(issue.updated_at);
-                const due = formatISODate(issue.due_at);
+                const dueISO = formatISODate(issue.due_at);
+                const due = dueISO ? `${dueISO} (${daysUntilISODate(dueISO)})` : '';
                 const urlPath = getUrlPath(issue.web_url);
                 const color = getProviderColor(issue.source);
                 const status = issue.status || '';
@@ -566,6 +686,21 @@
             } catch {
                 return '';
             }
+        }
+
+        function daysUntilISODate(isoDate) {
+            // isoDate: YYYY-MM-DD
+            const parts = (isoDate || '').split('-');
+            if (parts.length !== 3) return 0;
+            const y = Number(parts[0]);
+            const m = Number(parts[1]);
+            const d = Number(parts[2]);
+            if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return 0;
+
+            const now = new Date();
+            const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+            const dueUTC = Date.UTC(y, m - 1, d);
+            return Math.round((dueUTC - todayUTC) / 86400000);
         }
 
         function escapeHtml(text) {
