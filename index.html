@@ -334,6 +334,24 @@
             font-size: 0.9rem;
         }
 
+        .issue-labels {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+
+        .label-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.15rem 0.55rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            color: var(--text-color);
+            background: rgba(37, 99, 235, 0.18);
+            border: 1px solid rgba(37, 99, 235, 0.35);
+            white-space: nowrap;
+        }
+
         .empty-state {
             padding: 3rem;
             text-align: center;
@@ -647,11 +665,12 @@
                 const color = getProviderColor(issue.source);
                 const status = issue.status || '';
                 const priority = issue.priority || '';
+                const labelsHtml = renderLabels(issue.labels || []);
 
                 html += `<tr style="border-left: 4px solid ${color};">`;
                 html += '<td class="issue-source">' + escapeHtml(issue.source) + '</td>';
                 html += '<td class="issue-ref"><a href="' + escapeHtml(issue.web_url) + '" target="_blank">' + escapeHtml(urlPath) + '</a></td>';
-                html += '<td class="issue-title"><a href="' + escapeHtml(issue.web_url) + '" target="_blank">' + escapeHtml(issue.title) + '</a></td>';
+                html += '<td class="issue-title"><a href="' + escapeHtml(issue.web_url) + '" target="_blank">' + escapeHtml(issue.title) + '</a>' + labelsHtml + '</td>';
                 html += '<td class="issue-status">' + escapeHtml(status) + '</td>';
                 html += '<td class="issue-priority">' + escapeHtml(priority) + '</td>';
                 html += '<td class="date-cell">' + escapeHtml(due) + '</td>';
@@ -708,6 +727,14 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        function renderLabels(labels) {
+            if (!labels || labels.length === 0) return '';
+            const chips = labels.map(label => {
+                return '<span class="label-chip">' + escapeHtml(label) + '</span>';
+            });
+            return '<div class="issue-labels">' + chips.join('') + '</div>';
         }
     </script>
 </body>
