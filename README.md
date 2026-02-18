@@ -6,6 +6,9 @@ A lightweight dashboard that aggregates open issues assigned to you from multipl
 This is a read-only dashboard, not trying to replace the native interfaces of the providers,
 but help keep me sane with keeping the overview (GER = "Überblick") of my tasks.
 
+> Disclaimer: Next to scratching a real itch of mine, this is also a pet project to play
+> around with agent tools, models etc.
+
 ## Features
 
 - Single binary, no dependencies
