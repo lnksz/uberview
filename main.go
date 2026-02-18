@@ -99,10 +99,11 @@ type JiraIssue struct {
 	Key    string `json:"key"`
 	Self   string `json:"self"`
 	Fields struct {
-		Summary   string `json:"summary"`
-		Created   string `json:"created"`
-		Updated   string `json:"updated"`
-		DueDate   string `json:"duedate"`
+		Summary   string   `json:"summary"`
+		Created   string   `json:"created"`
+		Updated   string   `json:"updated"`
+		DueDate   string   `json:"duedate"`
+		Labels    []string `json:"labels"`
 		IssueType struct {
 			Name string `json:"name"`
 		} `json:"issuetype"`
@@ -126,6 +127,7 @@ type Issue struct {
 	WebURL    string     `json:"web_url"`
 	Status    string     `json:"status,omitempty"`
 	Priority  string     `json:"priority,omitempty"`
+	Labels    []string   `json:"labels,omitempty"`
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
 	DueAt     *time.Time `json:"due_at,omitempty"`
@@ -417,6 +419,7 @@ func (a *App) fetchGitLabIssues(provider TaskProvider) ([]Issue, error) {
 				Title:     gi.Title,
 				WebURL:    gi.WebURL,
 				Status:    gi.State,
+				Labels:    gi.Labels,
 				CreatedAt: gi.CreatedAt,
 				UpdatedAt: gi.UpdatedAt,
 				DueAt:     dueAt,
@@ -446,7 +449,7 @@ func (a *App) fetchJiraCloudIssues(provider TaskProvider) ([]Issue, error) {
 		params := url.Values{}
 		params.Set("jql", jql)
 		params.Set("maxResults", fmt.Sprintf("%d", maxResults))
-		params.Set("fields", "summary,created,updated,duedate,issuetype,status,project,priority")
+		params.Set("fields", "summary,created,updated,duedate,issuetype,status,project,priority,labels")
 		if nextPageToken != "" {
 			params.Set("nextPageToken", nextPageToken)
 		}
@@ -499,6 +502,7 @@ func (a *App) fetchJiraCloudIssues(provider TaskProvider) ([]Issue, error) {
 				WebURL:    webURL,
 				Status:    ji.Fields.Status.Name,
 				Priority:  ji.Fields.Priority.Name,
+				Labels:    ji.Fields.Labels,
 				CreatedAt: createdAt,
 				UpdatedAt: updatedAt,
 				DueAt:     dueAt,
@@ -530,7 +534,7 @@ func (a *App) fetchJiraServerIssues(provider TaskProvider) ([]Issue, error) {
 		params.Set("jql", jql)
 		params.Set("startAt", fmt.Sprintf("%d", startAt))
 		params.Set("maxResults", fmt.Sprintf("%d", maxResults))
-		params.Set("fields", "summary,created,updated,duedate,issuetype,status,project,priority")
+		params.Set("fields", "summary,created,updated,duedate,issuetype,status,project,priority,labels")
 
 		// Jira Server 8.20 uses API v2
 		apiURL := fmt.Sprintf("%s/rest/api/2/search?%s", provider.URL, params.Encode())
@@ -584,6 +588,7 @@ func (a *App) fetchJiraServerIssues(provider TaskProvider) ([]Issue, error) {
 				WebURL:    webURL,
 				Status:    ji.Fields.Status.Name,
 				Priority:  ji.Fields.Priority.Name,
+				Labels:    ji.Fields.Labels,
 				CreatedAt: createdAt,
 				UpdatedAt: updatedAt,
 				DueAt:     dueAt,
