@@ -6,15 +6,14 @@ Type=simple
 
 ExecStart=%h/.local/bin/uberview %h/.config/uberview/config.yaml
 Restart=on-failure
-RestartSec=2s
+RestartSec=5s
+StartLimitBurst=10
 
 NoNewPrivileges=true
 LockPersonality=true
-MemoryDenyWriteExecute=true
 RestrictRealtime=true
 RestrictSUIDSGID=true
 SystemCallArchitectures=native
-SystemCallFilter=@system-service
 
 [Install]
 WantedBy=default.target
