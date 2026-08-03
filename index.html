@@ -945,7 +945,7 @@
             let latest = today;
 
             for (const issue of issues) {
-                const taskStart = dateFromIssue(issue.created_at);
+                const taskStart = getIssueStartDate(issue);
                 if (!taskStart) continue;
                 let taskEnd = dateFromIssue(issue.due_at) || today;
                 if (taskEnd < taskStart) taskEnd = taskStart;
@@ -955,6 +955,10 @@
 
             if (!earliest) earliest = today;
             return { start: addUTCDays(earliest, -7), end: addUTCDays(latest, 7) };
+        }
+
+        function getIssueStartDate(issue) {
+            return dateFromIssue(issue.start_at) || dateFromIssue(issue.created_at);
         }
 
         function captureGanttScrollDate() {
@@ -1031,7 +1035,7 @@
                     html += `<div class="gantt-day ${weekend ? 'weekend' : ''} ${monthStart ? 'month-start' : ''} ${isToday ? 'today' : ''}" style="grid-column: ${index + 2}; grid-row: ${row};"></div>`;
                 }
 
-                const taskStart = dateFromIssue(issue.created_at);
+                const taskStart = getIssueStartDate(issue);
                 let taskEnd = dateFromIssue(issue.due_at) || today;
                 if (!taskStart) return;
                 if (taskEnd < taskStart) taskEnd = taskStart;

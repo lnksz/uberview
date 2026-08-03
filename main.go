@@ -62,6 +62,7 @@ type GitLabIssue struct {
 	WebURL      string    `json:"web_url"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
+	StartDate   *string   `json:"start_date"`
 	DueDate     *string   `json:"due_date"`
 	Labels      []string  `json:"labels"`
 	Type        string    `json:"type"`
@@ -102,6 +103,7 @@ type JiraIssue struct {
 		Summary   string   `json:"summary"`
 		Created   string   `json:"created"`
 		Updated   string   `json:"updated"`
+		StartDate string   `json:"customfield_10702"`
 		DueDate   string   `json:"duedate"`
 		Labels    []string `json:"labels"`
 		IssueType struct {
@@ -130,6 +132,7 @@ type Issue struct {
 	Labels    []string   `json:"labels,omitempty"`
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
+	StartAt   *time.Time `json:"start_at,omitempty"`
 	DueAt     *time.Time `json:"due_at,omitempty"`
 }
 
@@ -407,6 +410,13 @@ func (a *App) fetchGitLabIssues(provider TaskProvider) ([]Issue, error) {
 		}
 
 		for _, gi := range gitlabIssues {
+			var startAt *time.Time
+			if gi.StartDate != nil && *gi.StartDate != "" {
+				if t, err := time.Parse("2006-01-02", *gi.StartDate); err == nil {
+					startAt = &t
+				}
+			}
+
 			var dueAt *time.Time
 			if gi.DueDate != nil && *gi.DueDate != "" {
 				if t, err := time.Parse("2006-01-02", *gi.DueDate); err == nil {
@@ -422,6 +432,7 @@ func (a *App) fetchGitLabIssues(provider TaskProvider) ([]Issue, error) {
 				Labels:    gi.Labels,
 				CreatedAt: gi.CreatedAt,
 				UpdatedAt: gi.UpdatedAt,
+				StartAt:   startAt,
 				DueAt:     dueAt,
 			}
 			allIssues = append(allIssues, issue)
@@ -449,7 +460,7 @@ func (a *App) fetchJiraCloudIssues(provider TaskProvider) ([]Issue, error) {
 		params := url.Values{}
 		params.Set("jql", jql)
 		params.Set("maxResults", fmt.Sprintf("%d", maxResults))
-		params.Set("fields", "summary,created,updated,duedate,issuetype,status,project,priority,labels")
+		params.Set("fields", "summary,created,updated,customfield_10702,duedate,issuetype,status,project,priority,labels")
 		if nextPageToken != "" {
 			params.Set("nextPageToken", nextPageToken)
 		}
@@ -486,6 +497,13 @@ func (a *App) fetchJiraCloudIssues(provider TaskProvider) ([]Issue, error) {
 			createdAt, _ := time.Parse("2006-01-02T15:04:05.000-0700", ji.Fields.Created)
 			updatedAt, _ := time.Parse("2006-01-02T15:04:05.000-0700", ji.Fields.Updated)
 
+			var startAt *time.Time
+			if ji.Fields.StartDate != "" {
+				if t, err := time.Parse("2006-01-02", ji.Fields.StartDate); err == nil {
+					startAt = &t
+				}
+			}
+
 			var dueAt *time.Time
 			if ji.Fields.DueDate != "" {
 				if t, err := time.Parse("2006-01-02", ji.Fields.DueDate); err == nil {
@@ -505,6 +523,7 @@ func (a *App) fetchJiraCloudIssues(provider TaskProvider) ([]Issue, error) {
 				Labels:    ji.Fields.Labels,
 				CreatedAt: createdAt,
 				UpdatedAt: updatedAt,
+				StartAt:   startAt,
 				DueAt:     dueAt,
 			}
 			allIssues = append(allIssues, issue)
