@@ -494,8 +494,12 @@
 
         .gantt-grid {
             display: grid;
-            grid-auto-rows: 52px;
+            grid-auto-rows: 36px;
             position: relative;
+        }
+
+        .gantt-grid.is-resizing {
+            user-select: none;
         }
 
         .gantt-task-header,
@@ -576,9 +580,10 @@
 
         .gantt-task {
             display: flex;
-            flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
             min-width: 0;
+            padding-bottom: 0.3rem;
+            padding-top: 0.3rem;
         }
 
         .gantt-task a {
@@ -594,12 +599,14 @@
             text-decoration: underline;
         }
 
-        .gantt-task-source {
-            color: var(--text-muted);
-            font-size: 0.72rem;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+        .gantt-resize-handle {
+            cursor: col-resize;
+            justify-self: end;
+            left: calc(var(--gantt-task-width) - 4px);
+            position: sticky;
+            touch-action: none;
+            width: 8px;
+            z-index: 7;
         }
 
         .gantt-bar {
@@ -749,9 +756,11 @@
         const viewPreferenceKey = 'uberview.activeView';
         const ganttZoomPreferenceKey = 'uberview.ganttZoom';
         const hiddenProvidersPreferenceKey = 'uberview.hiddenProviders';
+        const ganttTaskWidthPreferenceKey = 'uberview.ganttTaskWidth';
         let activeView = getStoredPreference(viewPreferenceKey, ['table', 'gantt'], 'table');
         let ganttZoom = getStoredPreference(ganttZoomPreferenceKey, ['month', 'quarter', 'year'], 'month');
         let hiddenProviders = getStoredHiddenProviders();
+        let ganttTaskWidth = getStoredTaskWidth();
         let ganttScrollDate = null;
 
         function getStoredPreference(key, allowedValues, defaultValue) {
@@ -786,6 +795,43 @@
             } catch {
                 // Keep the selected state for this page when storage is unavailable.
             }
+        }
+
+        function getStoredTaskWidth() {
+            try {
+                const width = Number(localStorage.getItem(ganttTaskWidthPreferenceKey));
+                return Number.isFinite(width) ? Math.min(600, Math.max(180, width)) : 260;
+            } catch {
+                return 260;
+            }
+        }
+
+        function startTaskColumnResize(event) {
+            if (event.button !== 0) return;
+            const handle = event.currentTarget;
+            const grid = handle.closest('.gantt-grid');
+            const startX = event.clientX;
+            const initialWidth = ganttTaskWidth;
+
+            handle.setPointerCapture(event.pointerId);
+            grid.classList.add('is-resizing');
+
+            function resize(moveEvent) {
+                ganttTaskWidth = Math.min(600, Math.max(180, initialWidth + moveEvent.clientX - startX));
+                grid.style.setProperty('--gantt-task-width', `${ganttTaskWidth}px`);
+            }
+
+            function stop() {
+                grid.classList.remove('is-resizing');
+                storePreference(ganttTaskWidthPreferenceKey, ganttTaskWidth);
+                handle.removeEventListener('pointermove', resize);
+                handle.removeEventListener('pointerup', stop);
+                handle.removeEventListener('pointercancel', stop);
+            }
+
+            handle.addEventListener('pointermove', resize);
+            handle.addEventListener('pointerup', stop);
+            handle.addEventListener('pointercancel', stop);
         }
 
         function toggleProviderVisibility(providerName) {
@@ -1057,17 +1103,17 @@
             const dayCount = Math.round((end - start) / 86400000) + 1;
             const dayWidth = ganttZoom === 'month' ? 38 : (ganttZoom === 'quarter' ? 22 : 14);
             const today = utcToday();
-            const taskWidth = 260;
-            const columns = `${taskWidth}px repeat(${dayCount}, minmax(${dayWidth}px, 1fr))`;
-            const minWidth = taskWidth + dayCount * dayWidth;
+            const columns = `var(--gantt-task-width) repeat(${dayCount}, minmax(${dayWidth}px, 1fr))`;
+            const minWidth = dayCount * dayWidth;
             let html = '<div class="gantt-toolbar">';
             for (const zoom of ['month', 'quarter', 'year']) {
                 html += `<button type="button" class="${ganttZoom === zoom ? 'active' : ''}" onclick="setGanttZoom('${zoom}')">${zoom[0].toUpperCase() + zoom.slice(1)}</button>`;
             }
             html += '<button type="button" onclick="showTodayGantt()">Today</button>';
             html += '<span class="gantt-period-label">Scroll to explore all task dates</span></div>';
-            html += `<div class="gantt-scroll"><div class="gantt-grid" style="grid-template-columns: ${columns}; grid-template-rows: 32px 30px repeat(${issues.length}, 52px); width: max(100%, ${minWidth}px);">`;
+            html += `<div class="gantt-scroll"><div class="gantt-grid" style="--gantt-task-width: ${ganttTaskWidth}px; grid-template-columns: ${columns}; grid-template-rows: 32px 30px repeat(${issues.length}, 36px); width: max(100%, calc(var(--gantt-task-width) + ${minWidth}px));">`;
             html += '<div class="gantt-task-header" style="grid-column: 1; grid-row: 1 / 3;">Task</div>';
+            html += `<div class="gantt-resize-handle" style="grid-column: 1; grid-row: 1 / ${issues.length + 3};" onpointerdown="startTaskColumnResize(event)" aria-label="Resize task column" role="separator"></div>`;
 
             let monthStartIndex = 0;
             for (let index = 1; index <= dayCount; index++) {
@@ -1091,7 +1137,7 @@
             issues.forEach((issue, issueIndex) => {
                 const row = issueIndex + 3;
                 const color = getProviderColor(issue.source);
-                html += `<div class="gantt-task" style="grid-column: 1; grid-row: ${row}; border-left: 4px solid ${color};"><a href="${escapeAttribute(issue.web_url)}" target="_blank" title="${escapeAttribute(issue.title)}">${escapeHtml(issue.title)}</a><span class="gantt-task-source">${escapeHtml(issue.source)}</span></div>`;
+                html += `<div class="gantt-task" style="grid-column: 1; grid-row: ${row}; border-left: 4px solid ${color};"><a href="${escapeAttribute(issue.web_url)}" target="_blank" title="${escapeAttribute(issue.title)}">${escapeHtml(issue.title)}</a></div>`;
 
                 for (let index = 0; index < dayCount; index++) {
                     const day = addUTCDays(start, index);
