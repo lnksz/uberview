@@ -20,6 +20,7 @@
             --error: #f87171;
             --border: #2a2a4a;
             --hover-bg: rgba(255, 255, 255, 0.02);
+            --gantt-weekend-bg: #1d2742;
 
             /* Provider color palette (deterministic) */
             --provider-color-0: #3b82f6;
@@ -45,6 +46,7 @@
                 --error: #ef4444;
                 --border: #e0e0e0;
                 --hover-bg: rgba(0, 0, 0, 0.02);
+                --gantt-weekend-bg: #f1f1f5;
             }
         }
 
@@ -72,6 +74,45 @@
         h1 {
             font-weight: 300;
             font-size: 1.5rem;
+        }
+
+        .view-switch {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 0.45rem;
+        }
+
+        .view-switch button {
+            appearance: none;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            font: inherit;
+            font-weight: 300;
+            font-size: 1.5rem;
+            padding: 0;
+        }
+
+        .view-switch button.inactive {
+            opacity: 0.45;
+        }
+
+        .view-switch button:hover,
+        .view-switch button:focus-visible {
+            opacity: 1;
+        }
+
+        .view-switch button:focus-visible {
+            outline: 2px solid var(--clickable);
+            outline-offset: 3px;
+            border-radius: 3px;
+        }
+
+        .view-separator {
+            color: var(--text-muted);
+            font-weight: 300;
+            font-size: 1.3rem;
         }
 
         .refresh-btn {
@@ -385,11 +426,200 @@
             border-left: 3px solid var(--error);
             color: var(--error);
         }
+
+        .gantt-toolbar {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 0.65rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .gantt-toolbar button {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-color);
+            cursor: pointer;
+            font: inherit;
+            font-size: 0.8rem;
+            padding: 0.3rem 0.55rem;
+        }
+
+        .gantt-toolbar button:hover,
+        .gantt-toolbar button.active {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .gantt-toolbar button:focus-visible {
+            outline: 2px solid var(--clickable);
+            outline-offset: 2px;
+        }
+
+        .gantt-period-label {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-left: 0.25rem;
+        }
+
+        .gantt-scroll {
+            max-height: calc(100vh - 16rem);
+            min-height: 16rem;
+            overflow: auto;
+        }
+
+        .gantt-grid {
+            display: grid;
+            grid-auto-rows: 52px;
+            position: relative;
+        }
+
+        .gantt-task-header,
+        .gantt-month-header,
+        .gantt-day-header {
+            align-items: center;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            font-size: 0.7rem;
+            font-weight: 600;
+            justify-content: center;
+            position: sticky;
+            top: 0;
+            text-transform: uppercase;
+            z-index: 3;
+        }
+
+        .gantt-month-header {
+            top: 0;
+            z-index: 5;
+        }
+
+        .gantt-day-header {
+            top: 32px;
+            z-index: 5;
+        }
+
+        .gantt-task-header,
+        .gantt-task {
+            left: 0;
+            justify-content: flex-start;
+            padding: 0.5rem 0.75rem;
+            position: sticky;
+            z-index: 2;
+        }
+
+        .gantt-task-header {
+            align-self: stretch;
+            top: 0;
+            z-index: 6;
+        }
+
+        .gantt-day-header.weekend {
+            background: var(--gantt-weekend-bg);
+        }
+
+        .gantt-day.weekend {
+            background: var(--hover-bg);
+        }
+
+        .gantt-day-header.today {
+            color: var(--clickable);
+        }
+
+        .gantt-month-header.month-start {
+            border-left: 2px solid var(--border);
+        }
+
+        .gantt-task,
+        .gantt-day {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .gantt-day {
+            border-left: 1px solid var(--border);
+        }
+
+        .gantt-day.month-start,
+        .gantt-day-header.month-start {
+            border-left-width: 2px;
+        }
+
+        .gantt-day.today {
+            box-shadow: inset 2px 0 var(--clickable);
+        }
+
+        .gantt-task {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-width: 0;
+        }
+
+        .gantt-task a {
+            color: var(--text-color);
+            font-size: 0.85rem;
+            overflow: hidden;
+            text-decoration: none;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .gantt-task a:hover {
+            text-decoration: underline;
+        }
+
+        .gantt-task-source {
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .gantt-bar {
+            align-self: center;
+            background: var(--provider-color);
+            border-radius: 999px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+            color: #fff;
+            font-size: 0.7rem;
+            height: 22px;
+            line-height: 22px;
+            margin: 0 2px;
+            overflow: hidden;
+            padding: 0 0.45rem;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            z-index: 1;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 0.75rem;
+            }
+
+            .gantt-toolbar {
+                padding: 0.5rem 0.75rem;
+            }
+
+            .gantt-period-label {
+                flex-basis: 100%;
+                margin-left: 0;
+            }
+
+            .gantt-scroll {
+                max-height: calc(100vh - 18rem);
+            }
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>Uberview</h1>
+        <h1 class="view-switch"><button type="button" id="table-view-btn" aria-pressed="true" onclick="setView('table')">Uberview</button><span class="view-separator">|</span><button type="button" id="gantt-view-btn" class="inactive" aria-pressed="false" onclick="setView('gantt')">Gantt</button></h1>
     </div>
 
     <div class="providers-grid" id="providers-grid">
@@ -487,6 +717,9 @@
         // Sort state (UI). Default is Due ascending.
         // If the user turns sorting "off", we still apply the default ordering (due ASC).
         let sortState = { key: 'due', dir: 'asc' };
+        let activeView = 'table';
+        let ganttZoom = 'month';
+        let ganttScrollDate = null;
 
         function getSortIcon(dir) {
             if (dir === 'desc') return 'arrow_downward';
@@ -511,6 +744,23 @@
                     sortState = { key, dir };
                 }
             }
+            renderAllIssues();
+        }
+
+        function setView(view) {
+            activeView = view;
+            const tableButton = document.getElementById('table-view-btn');
+            const ganttButton = document.getElementById('gantt-view-btn');
+            tableButton.classList.toggle('inactive', view !== 'table');
+            ganttButton.classList.toggle('inactive', view !== 'gantt');
+            tableButton.setAttribute('aria-pressed', view === 'table');
+            ganttButton.setAttribute('aria-pressed', view === 'gantt');
+            renderAllIssues();
+        }
+
+        function setGanttZoom(zoom) {
+            ganttScrollDate = captureGanttScrollDate();
+            ganttZoom = zoom;
             renderAllIssues();
         }
 
@@ -624,6 +874,8 @@
             const content = document.getElementById('issues-content');
             const countEl = document.getElementById('issues-count');
 
+            if (activeView === 'gantt') ganttScrollDate = ganttScrollDate || captureGanttScrollDate();
+
             // Combine all issues from all providers
             let allIssues = [];
             for (const issues of Object.values(issuesByProvider)) {
@@ -637,7 +889,137 @@
             }
 
             countEl.textContent = allIssues.length + ' issue' + (allIssues.length !== 1 ? 's' : '');
-            content.innerHTML = renderIssuesTable(allIssues);
+            content.innerHTML = activeView === 'gantt' ? renderGantt(allIssues) : renderIssuesTable(allIssues);
+        }
+
+        function utcToday() {
+            const now = new Date();
+            return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+        }
+
+        function dateFromIssue(value) {
+            const iso = formatISODate(value);
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null;
+            const [year, month, day] = iso.split('-').map(Number);
+            const date = new Date(Date.UTC(year, month - 1, day));
+            return Number.isNaN(date.getTime()) ? null : date;
+        }
+
+        function addUTCDays(date, days) {
+            const result = new Date(date.getTime());
+            result.setUTCDate(result.getUTCDate() + days);
+            return result;
+        }
+
+        function getGanttRange(issues) {
+            const today = utcToday();
+            let earliest = null;
+            let latest = today;
+
+            for (const issue of issues) {
+                const taskStart = dateFromIssue(issue.created_at);
+                if (!taskStart) continue;
+                let taskEnd = dateFromIssue(issue.due_at) || today;
+                if (taskEnd < taskStart) taskEnd = taskStart;
+                if (!earliest || taskStart < earliest) earliest = taskStart;
+                if (taskEnd > latest) latest = taskEnd;
+            }
+
+            if (!earliest) earliest = today;
+            return { start: addUTCDays(earliest, -7), end: addUTCDays(latest, 7) };
+        }
+
+        function captureGanttScrollDate() {
+            const scroll = document.querySelector('.gantt-scroll');
+            if (!scroll) return null;
+            const taskWidth = document.querySelector('.gantt-task-header')?.offsetWidth || 0;
+            const viewportLeft = scroll.getBoundingClientRect().left + taskWidth;
+            const dates = scroll.querySelectorAll('.gantt-day-header[data-date]');
+            for (const date of dates) {
+                if (date.getBoundingClientRect().right > viewportLeft) return date.dataset.date;
+            }
+            return null;
+        }
+
+        function scrollGanttToDate(isoDate) {
+            const scroll = document.querySelector('.gantt-scroll');
+            const day = document.querySelector(`.gantt-day-header[data-date="${isoDate}"]`);
+            const taskHeader = document.querySelector('.gantt-task-header');
+            if (!scroll || !day || !taskHeader) return;
+            scroll.scrollLeft = Math.max(0, day.offsetLeft - taskHeader.offsetWidth - 16);
+        }
+
+        function showTodayGantt() {
+            ganttScrollDate = utcToday().toISOString().slice(0, 10);
+            scrollGanttToDate(ganttScrollDate);
+        }
+
+        function renderGantt(issues) {
+            const { start, end } = getGanttRange(issues);
+            const dayCount = Math.round((end - start) / 86400000) + 1;
+            const dayWidth = ganttZoom === 'month' ? 38 : (ganttZoom === 'quarter' ? 22 : 14);
+            const today = utcToday();
+            const taskWidth = 260;
+            const columns = `${taskWidth}px repeat(${dayCount}, minmax(${dayWidth}px, 1fr))`;
+            const minWidth = taskWidth + dayCount * dayWidth;
+            let html = '<div class="gantt-toolbar">';
+            for (const zoom of ['month', 'quarter', 'year']) {
+                html += `<button type="button" class="${ganttZoom === zoom ? 'active' : ''}" onclick="setGanttZoom('${zoom}')">${zoom[0].toUpperCase() + zoom.slice(1)}</button>`;
+            }
+            html += '<button type="button" onclick="showTodayGantt()">Today</button>';
+            html += '<span class="gantt-period-label">Scroll to explore all task dates</span></div>';
+            html += `<div class="gantt-scroll"><div class="gantt-grid" style="grid-template-columns: ${columns}; grid-template-rows: 32px 30px repeat(${issues.length}, 52px); width: max(100%, ${minWidth}px);">`;
+            html += '<div class="gantt-task-header" style="grid-column: 1; grid-row: 1 / 3;">Task</div>';
+
+            let monthStartIndex = 0;
+            for (let index = 1; index <= dayCount; index++) {
+                const day = index < dayCount ? addUTCDays(start, index) : null;
+                if (day && day.getUTCMonth() === addUTCDays(start, monthStartIndex).getUTCMonth()) continue;
+                const monthStart = addUTCDays(start, monthStartIndex);
+                const monthLabel = monthStart.toLocaleDateString(undefined, { month: 'long', year: 'numeric', timeZone: 'UTC' });
+                html += `<div class="gantt-month-header month-start" style="grid-column: ${monthStartIndex + 2} / ${index + 2}; grid-row: 1;">${monthLabel}</div>`;
+                monthStartIndex = index;
+            }
+
+            for (let index = 0; index < dayCount; index++) {
+                const day = addUTCDays(start, index);
+                const weekend = day.getUTCDay() === 0 || day.getUTCDay() === 6;
+                const monthStart = day.getUTCDate() === 1;
+                const isToday = day.getTime() === today.getTime();
+                const isoDate = day.toISOString().slice(0, 10);
+                html += `<div class="gantt-day-header ${weekend ? 'weekend' : ''} ${monthStart ? 'month-start' : ''} ${isToday ? 'today' : ''}" data-date="${isoDate}" style="grid-column: ${index + 2}; grid-row: 2;" title="${isoDate}">${day.getUTCDate()}</div>`;
+            }
+
+            issues.forEach((issue, issueIndex) => {
+                const row = issueIndex + 3;
+                const color = getProviderColor(issue.source);
+                html += `<div class="gantt-task" style="grid-column: 1; grid-row: ${row}; border-left: 4px solid ${color};"><a href="${escapeAttribute(issue.web_url)}" target="_blank" title="${escapeAttribute(issue.title)}">${escapeHtml(issue.title)}</a><span class="gantt-task-source">${escapeHtml(issue.source)}</span></div>`;
+
+                for (let index = 0; index < dayCount; index++) {
+                    const day = addUTCDays(start, index);
+                    const weekend = day.getUTCDay() === 0 || day.getUTCDay() === 6;
+                    const monthStart = day.getUTCDate() === 1;
+                    const isToday = day.getTime() === today.getTime();
+                    html += `<div class="gantt-day ${weekend ? 'weekend' : ''} ${monthStart ? 'month-start' : ''} ${isToday ? 'today' : ''}" style="grid-column: ${index + 2}; grid-row: ${row};"></div>`;
+                }
+
+                const taskStart = dateFromIssue(issue.created_at);
+                let taskEnd = dateFromIssue(issue.due_at) || today;
+                if (!taskStart) return;
+                if (taskEnd < taskStart) taskEnd = taskStart;
+                const visibleStart = taskStart > start ? taskStart : start;
+                const visibleEnd = taskEnd < end ? taskEnd : end;
+                if (visibleStart > visibleEnd) return;
+                const startIndex = Math.round((visibleStart - start) / 86400000);
+                const endIndex = Math.round((visibleEnd - start) / 86400000);
+                const title = `${issue.title}: ${visibleStart.toISOString().slice(0, 10)} to ${visibleEnd.toISOString().slice(0, 10)}`;
+                html += `<div class="gantt-bar" style="--provider-color: ${color}; grid-column: ${startIndex + 2} / ${endIndex + 3}; grid-row: ${row};" title="${escapeAttribute(title)}">${escapeHtml(issue.title)}</div>`;
+            });
+
+            const scrollDate = ganttScrollDate || today.toISOString().slice(0, 10);
+            requestAnimationFrame(() => scrollGanttToDate(scrollDate));
+            ganttScrollDate = null;
+            return html + '</div></div>';
         }
 
         function renderIssuesTable(issues) {
@@ -727,6 +1109,14 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        function escapeAttribute(text) {
+            return String(text || '')
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
         }
 
         function renderLabels(labels) {
