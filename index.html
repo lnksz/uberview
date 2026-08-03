@@ -178,6 +178,28 @@
             cursor: not-allowed;
         }
 
+        .provider-visibility-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: opacity 0.2s;
+            flex-shrink: 0;
+            min-width: 4.5rem;
+            text-align: center;
+        }
+
+        .provider-visibility-btn:hover {
+            color: var(--text-color);
+        }
+
+        .provider-card.is-hidden {
+            opacity: 0.65;
+        }
+
         .status-indicator {
             width: 12px;
             height: 12px;
@@ -693,9 +715,10 @@
             const statusClass = status.online ? 'online' : 'offline';
             const countBadge = status.issue_count > 0 ? `<span class="task-count">${status.issue_count}</span>` : '';
             const color = getProviderColor(status.name);
+            const hidden = hiddenProviders.has(status.name);
 
             return `
-                <div class="provider-card" data-provider="${escapeHtml(status.name)}" style="border-left-color: ${color};">
+                <div class="provider-card ${hidden ? 'is-hidden' : ''}" data-provider="${escapeHtml(status.name)}" style="border-left-color: ${color};">
                     <div class="status-indicator ${statusClass}"></div>
                     <div class="provider-info">
                         <div class="provider-name">
@@ -710,6 +733,9 @@
                     <button class="provider-refresh-btn" onclick="refreshProvider('${escapeHtml(status.name)}')">
                         Refresh
                     </button>
+                    <button class="provider-visibility-btn" type="button" aria-pressed="${hidden}" onclick="toggleProviderVisibility('${escapeHtml(status.name)}')">
+                        ${hidden ? 'Show' : 'Hide'}
+                    </button>
                 </div>
             `;
         }
@@ -722,8 +748,10 @@
         let sortState = { key: 'due', dir: 'asc' };
         const viewPreferenceKey = 'uberview.activeView';
         const ganttZoomPreferenceKey = 'uberview.ganttZoom';
+        const hiddenProvidersPreferenceKey = 'uberview.hiddenProviders';
         let activeView = getStoredPreference(viewPreferenceKey, ['table', 'gantt'], 'table');
         let ganttZoom = getStoredPreference(ganttZoomPreferenceKey, ['month', 'quarter', 'year'], 'month');
+        let hiddenProviders = getStoredHiddenProviders();
         let ganttScrollDate = null;
 
         function getStoredPreference(key, allowedValues, defaultValue) {
@@ -741,6 +769,43 @@
             } catch {
                 // Keep the selected state for this page when storage is unavailable.
             }
+        }
+
+        function getStoredHiddenProviders() {
+            try {
+                const value = JSON.parse(localStorage.getItem(hiddenProvidersPreferenceKey));
+                return new Set(Array.isArray(value) ? value.filter(name => typeof name === 'string') : []);
+            } catch {
+                return new Set();
+            }
+        }
+
+        function storeHiddenProviders() {
+            try {
+                localStorage.setItem(hiddenProvidersPreferenceKey, JSON.stringify([...hiddenProviders]));
+            } catch {
+                // Keep the selected state for this page when storage is unavailable.
+            }
+        }
+
+        function toggleProviderVisibility(providerName) {
+            if (hiddenProviders.has(providerName)) {
+                hiddenProviders.delete(providerName);
+            } else {
+                hiddenProviders.add(providerName);
+            }
+            storeHiddenProviders();
+
+            const card = Array.from(document.querySelectorAll('.provider-card'))
+                .find(element => element.dataset.provider === providerName);
+            if (card) {
+                const hidden = hiddenProviders.has(providerName);
+                card.classList.toggle('is-hidden', hidden);
+                const button = card.querySelector('.provider-visibility-btn');
+                button.textContent = hidden ? 'Show' : 'Hide';
+                button.setAttribute('aria-pressed', hidden);
+            }
+            renderAllIssues();
         }
 
         function getSortIcon(dir) {
@@ -906,12 +971,13 @@
 
             // Combine all issues from all providers
             let allIssues = [];
-            for (const issues of Object.values(issuesByProvider)) {
+            for (const [providerName, issues] of Object.entries(issuesByProvider)) {
+                if (hiddenProviders.has(providerName)) continue;
                 allIssues = allIssues.concat(issues);
             }
 
             if (allIssues.length === 0) {
-                content.innerHTML = '<div class="empty-state">No open issues. Click "Refresh" on a provider to load issues.</div>';
+                content.innerHTML = '<div class="empty-state">No visible open issues. Click "Show" or "Refresh" on a provider to load issues.</div>';
                 countEl.textContent = '0 issues';
                 return;
             }
