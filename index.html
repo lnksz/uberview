@@ -663,7 +663,10 @@
         }
 
         // Check server status on page load
-        document.addEventListener('DOMContentLoaded', checkStatus);
+        document.addEventListener('DOMContentLoaded', () => {
+            applyViewButtonState();
+            checkStatus();
+        });
 
         async function checkStatus() {
             const grid = document.getElementById('providers-grid');
@@ -717,9 +720,28 @@
         // Sort state (UI). Default is Due ascending.
         // If the user turns sorting "off", we still apply the default ordering (due ASC).
         let sortState = { key: 'due', dir: 'asc' };
-        let activeView = 'table';
-        let ganttZoom = 'month';
+        const viewPreferenceKey = 'uberview.activeView';
+        const ganttZoomPreferenceKey = 'uberview.ganttZoom';
+        let activeView = getStoredPreference(viewPreferenceKey, ['table', 'gantt'], 'table');
+        let ganttZoom = getStoredPreference(ganttZoomPreferenceKey, ['month', 'quarter', 'year'], 'month');
         let ganttScrollDate = null;
+
+        function getStoredPreference(key, allowedValues, defaultValue) {
+            try {
+                const value = localStorage.getItem(key);
+                return allowedValues.includes(value) ? value : defaultValue;
+            } catch {
+                return defaultValue;
+            }
+        }
+
+        function storePreference(key, value) {
+            try {
+                localStorage.setItem(key, value);
+            } catch {
+                // Keep the selected state for this page when storage is unavailable.
+            }
+        }
 
         function getSortIcon(dir) {
             if (dir === 'desc') return 'arrow_downward';
@@ -749,18 +771,24 @@
 
         function setView(view) {
             activeView = view;
+            storePreference(viewPreferenceKey, view);
+            applyViewButtonState();
+            renderAllIssues();
+        }
+
+        function applyViewButtonState() {
             const tableButton = document.getElementById('table-view-btn');
             const ganttButton = document.getElementById('gantt-view-btn');
-            tableButton.classList.toggle('inactive', view !== 'table');
-            ganttButton.classList.toggle('inactive', view !== 'gantt');
-            tableButton.setAttribute('aria-pressed', view === 'table');
-            ganttButton.setAttribute('aria-pressed', view === 'gantt');
-            renderAllIssues();
+            tableButton.classList.toggle('inactive', activeView !== 'table');
+            ganttButton.classList.toggle('inactive', activeView !== 'gantt');
+            tableButton.setAttribute('aria-pressed', activeView === 'table');
+            ganttButton.setAttribute('aria-pressed', activeView === 'gantt');
         }
 
         function setGanttZoom(zoom) {
             ganttScrollDate = captureGanttScrollDate();
             ganttZoom = zoom;
+            storePreference(ganttZoomPreferenceKey, zoom);
             renderAllIssues();
         }
 
