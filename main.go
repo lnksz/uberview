@@ -373,6 +373,24 @@ func openIssueCache(path string, ttl time.Duration) (*IssueCache, error) {
 	return &IssueCache{db: db, ttl: ttl}, nil
 }
 
+func issueCachePath() (string, error) {
+	if path := os.Getenv("UBERVIEW_CACHE_PATH"); path != "" {
+		return path, nil
+	}
+	cacheRoot, err := os.UserCacheDir()
+	if err != nil {
+		return "", fmt.Errorf("locating user cache directory: %w", err)
+	}
+	cacheDir := filepath.Join(cacheRoot, "uberview")
+	if err := os.MkdirAll(cacheDir, 0o700); err != nil {
+		return "", fmt.Errorf("creating issue cache directory: %w", err)
+	}
+	if err := os.Chmod(cacheDir, 0o700); err != nil {
+		return "", fmt.Errorf("securing issue cache directory: %w", err)
+	}
+	return filepath.Join(cacheDir, "sqlite.db"), nil
+}
+
 func (a *App) fetchProviderIssues(provider TaskProvider) ([]Issue, bool, error) {
 	key := providerCacheKey(provider)
 	a.fetchMu.Lock()
@@ -1101,7 +1119,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
-	cache, err := openIssueCache("sqlite.db", issueCacheTTL)
+	cachePath, err := issueCachePath()
+	if err != nil {
+		log.Fatalf("Failed to prepare issue cache: %v", err)
+	}
+	cache, err := openIssueCache(cachePath, issueCacheTTL)
 	if err != nil {
 		log.Fatalf("Failed to initialize issue cache: %v", err)
 	}

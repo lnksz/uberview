@@ -255,6 +255,40 @@ func TestIssueCacheExpiresEntries(t *testing.T) {
 	}
 }
 
+func TestIssueCachePathUsesPrivateUserCacheDirectory(t *testing.T) {
+	cacheRoot := t.TempDir()
+	t.Setenv("XDG_CACHE_HOME", cacheRoot)
+	t.Setenv("UBERVIEW_CACHE_PATH", "")
+
+	path, err := issueCachePath()
+	if err != nil {
+		t.Fatalf("issueCachePath() error = %v", err)
+	}
+	wantDir := filepath.Join(cacheRoot, "uberview")
+	if want := filepath.Join(wantDir, "sqlite.db"); path != want {
+		t.Fatalf("issueCachePath() = %q, want %q", path, want)
+	}
+	info, err := os.Stat(wantDir)
+	if err != nil {
+		t.Fatalf("stat cache directory: %v", err)
+	}
+	if got := info.Mode().Perm(); got != 0o700 {
+		t.Fatalf("cache directory permissions = %o, want 700", got)
+	}
+}
+
+func TestIssueCachePathAllowsOverride(t *testing.T) {
+	t.Setenv("UBERVIEW_CACHE_PATH", ":memory:")
+
+	path, err := issueCachePath()
+	if err != nil {
+		t.Fatalf("issueCachePath() error = %v", err)
+	}
+	if path != ":memory:" {
+		t.Fatalf("issueCachePath() = %q, want :memory:", path)
+	}
+}
+
 func TestOpenIssueCacheRejectsSymlink(t *testing.T) {
 	dir := t.TempDir()
 	target := filepath.Join(dir, "target")
