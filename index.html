@@ -4,7 +4,6 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="icon" type="image/x-icon" href="/favicon.ico">
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" />
         <title>Uberview - Task Overview</title>
         <style>
         :root {
@@ -43,7 +42,7 @@
                 --clickable: #2563eb;
                 --header-bg: #e0e7ff85;
                 --success: #22c55e;
-                --error: #ef4444;
+                --error: #dc2626;
                 --border: #e0e0e0;
                 --hover-bg: rgba(0, 0, 0, 0.02);
                 --gantt-weekend-bg: #f1f1f5;
@@ -95,7 +94,7 @@
         }
 
         .view-switch button.inactive {
-            opacity: 0.45;
+            color: var(--text-muted);
         }
 
         .view-switch button:hover,
@@ -147,7 +146,7 @@
             border-radius: 8px;
             padding: 0.75rem 1rem;
             border: 1px solid var(--border);
-            border-left: 4px solid var(--provider-color, var(--accent));
+            border-left: 1px solid var(--provider-color, var(--accent));
             display: flex;
             align-items: center;
             gap: 0.75rem;
@@ -210,12 +209,10 @@
 
         .status-indicator.online {
             background-color: var(--success);
-            box-shadow: 0 0 10px var(--success);
         }
 
         .status-indicator.offline {
             background-color: var(--error);
-            box-shadow: 0 0 10px var(--error);
         }
 
         .provider-info {
@@ -228,7 +225,9 @@
             font-size: 1rem;
             display: flex;
             align-items: center;
+            flex-wrap: wrap;
             gap: 0.5rem;
+            overflow-wrap: anywhere;
         }
 
         .task-count {
@@ -243,6 +242,7 @@
         .provider-url {
             color: var(--text-muted);
             font-size: 0.85rem;
+            overflow-wrap: anywhere;
         }
 
         .provider-url a {
@@ -259,6 +259,20 @@
             font-size: 0.75rem;
             margin-left: 0.25rem;
             text-transform: uppercase;
+        }
+
+        .provider-status {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 400;
+        }
+
+        .provider-error {
+            color: var(--error);
+            font-size: 0.8rem;
+            line-height: 1.35;
+            margin-top: 0.25rem;
+            overflow-wrap: anywhere;
         }
 
         .issues-container {
@@ -333,15 +347,21 @@
             border-radius: 4px;
         }
 
-        .material-symbols-outlined {
-            font-variation-settings:
-                'FILL' 0,
-                'wght' 400,
-                'GRAD' 0,
-                'opsz' 20;
+        .sort-icon {
+            fill: none;
             font-size: 18px;
+            height: 18px;
             line-height: 1;
+            stroke: currentColor;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-width: 2;
             user-select: none;
+            width: 18px;
+        }
+
+        [hidden] {
+            display: none !important;
         }
 
         tr:last-child td {
@@ -602,11 +622,16 @@
         .gantt-resize-handle {
             cursor: col-resize;
             justify-self: end;
-            left: calc(var(--gantt-task-width) - 4px);
+            left: calc(var(--gantt-task-width) - 6px);
             position: sticky;
             touch-action: none;
-            width: 8px;
+            width: 12px;
             z-index: 7;
+        }
+
+        .gantt-resize-handle:focus-visible {
+            outline: 2px solid var(--clickable);
+            outline-offset: -2px;
         }
 
         .gantt-bar {
@@ -647,30 +672,32 @@
     </style>
 </head>
 <body>
-    <div class="header">
+    <header class="header">
         <h1 class="view-switch"><button type="button" id="table-view-btn" aria-pressed="true" onclick="setView('table')">Uberview</button><span class="view-separator">|</span><button type="button" id="gantt-view-btn" class="inactive" aria-pressed="false" onclick="setView('gantt')">Gantt</button></h1>
-    </div>
+    </header>
 
-    <div class="providers-grid" id="providers-grid">
-        <div class="provider-card">
-            <div class="status-indicator"></div>
-            <div class="provider-info">
-                <div class="provider-name">Loading providers...</div>
+    <main>
+        <div class="providers-grid" id="providers-grid">
+            <div class="provider-card">
+                <div class="status-indicator" aria-hidden="true"></div>
+                <div class="provider-info">
+                    <div class="provider-name">Loading providers...</div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="issues-container">
-        <div class="issues-header">
-            <h2>Open Issues</h2>
-            <span class="issues-count" id="issues-count"></span>
-        </div>
-        <div id="issues-content">
-            <div class="empty-state">
-                Click "Refresh" on a provider to load issues
+        <div class="issues-container">
+            <div class="issues-header">
+                <h2>Open Issues</h2>
+                <span class="issues-count" id="issues-count"></span>
+            </div>
+            <div id="issues-content">
+                <div class="empty-state">
+                    Click "Refresh" on a provider to load issues
+                </div>
             </div>
         </div>
-    </div>
+    </main>
 
     <script>
         // Provider color palette (deterministic, matches CSS variables)
@@ -691,17 +718,57 @@
             return providerColors[providerColorMap[providerName]];
         }
 
+        function getReadableTextColor(hexColor) {
+            const channels = [1, 3, 5].map(index => parseInt(hexColor.slice(index, index + 2), 16) / 255);
+            const luminance = channels
+                .map(channel => channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4)
+                .reduce((total, channel, index) => total + channel * [0.2126, 0.7152, 0.0722][index], 0);
+            const whiteContrast = 1.05 / (luminance + 0.05);
+            const blackContrast = (luminance + 0.05) / 0.05;
+            return whiteContrast >= blackContrast ? '#fff' : '#000';
+        }
+
         // Check server status on page load
         document.addEventListener('DOMContentLoaded', () => {
             applyViewButtonState();
+            bindDynamicControls();
             checkStatus();
         });
+
+        function bindDynamicControls() {
+            document.getElementById('providers-grid').addEventListener('click', event => {
+                const button = event.target.closest('button[data-provider-action]');
+                if (!button) return;
+
+                const card = button.closest('.provider-card');
+                const providerName = card?.dataset.provider;
+                if (!card || !providerName) return;
+
+                if (button.dataset.providerAction === 'refresh') {
+                    refreshProvider(providerName, card);
+                } else if (button.dataset.providerAction === 'visibility') {
+                    toggleProviderVisibility(providerName);
+                }
+            });
+
+            const issuesContent = document.getElementById('issues-content');
+            issuesContent.addEventListener('pointerdown', event => {
+                const handle = event.target.closest('.gantt-resize-handle');
+                if (handle) startTaskColumnResize(event, handle);
+            });
+            issuesContent.addEventListener('keydown', event => {
+                if (event.target.classList.contains('gantt-resize-handle')) {
+                    resizeTaskColumnFromKeyboard(event);
+                }
+            });
+        }
 
         async function checkStatus() {
             const grid = document.getElementById('providers-grid');
 
             try {
                 const response = await fetch('/api/status');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const statuses = await response.json();
 
                 if (!Array.isArray(statuses) || statuses.length === 0) {
@@ -714,33 +781,37 @@
 
                 grid.innerHTML = statuses.map(status => renderProviderCard(status)).join('');
             } catch (error) {
-                grid.innerHTML = '<div class="provider-card"><div class="status-indicator offline"></div><div class="provider-info"><div class="provider-name">Failed to load providers</div></div></div>';
+                grid.innerHTML = '<div class="provider-card"><div class="status-indicator offline" aria-hidden="true"></div><div class="provider-info"><div class="provider-name">Failed to load providers</div><div class="provider-error" role="alert">Check the server connection, then reload this page.</div></div></div>';
             }
         }
 
         function renderProviderCard(status) {
             const statusClass = status.online ? 'online' : 'offline';
+            const statusLabel = status.online ? 'Online' : 'Offline';
             const countBadge = status.issue_count > 0 ? `<span class="task-count">${status.issue_count}</span>` : '';
+            const errorMessage = status.online ? '' : (status.error || 'Provider unavailable');
             const color = getProviderColor(status.name);
             const hidden = hiddenProviders.has(status.name);
 
             return `
-                <div class="provider-card ${hidden ? 'is-hidden' : ''}" data-provider="${escapeHtml(status.name)}" style="border-left-color: ${color};">
-                    <div class="status-indicator ${statusClass}"></div>
+                <div class="provider-card ${hidden ? 'is-hidden' : ''}" data-provider="${escapeAttribute(status.name)}" style="border-left-color: ${color};">
+                    <div class="status-indicator ${statusClass}" aria-hidden="true"></div>
                     <div class="provider-info">
                         <div class="provider-name">
                             ${escapeHtml(status.name)}
                             ${countBadge}
+                            <span class="provider-status" role="status">${statusLabel}</span>
                         </div>
                         <div class="provider-url">
-                            <a href="${escapeHtml(status.url)}" target="_blank">${escapeHtml(status.url)}</a>
+                            <a href="${escapeAttribute(status.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(status.url)}</a>
                             <span class="provider-type">[${escapeHtml(status.type)}]</span>
                         </div>
+                        <div class="provider-error" role="alert" ${errorMessage ? '' : 'hidden'}>${escapeHtml(errorMessage)}</div>
                     </div>
-                    <button class="provider-refresh-btn" onclick="refreshProvider('${escapeHtml(status.name)}')">
+                    <button class="provider-refresh-btn" type="button" data-provider-action="refresh">
                         Refresh
                     </button>
-                    <button class="provider-visibility-btn" type="button" aria-pressed="${hidden}" onclick="toggleProviderVisibility('${escapeHtml(status.name)}')">
+                    <button class="provider-visibility-btn" type="button" data-provider-action="visibility" aria-pressed="${hidden}">
                         ${hidden ? 'Show' : 'Hide'}
                     </button>
                 </div>
@@ -806,9 +877,8 @@
             }
         }
 
-        function startTaskColumnResize(event) {
+        function startTaskColumnResize(event, handle) {
             if (event.button !== 0) return;
-            const handle = event.currentTarget;
             const grid = handle.closest('.gantt-grid');
             const startX = event.clientX;
             const initialWidth = ganttTaskWidth;
@@ -819,6 +889,7 @@
             function resize(moveEvent) {
                 ganttTaskWidth = Math.min(600, Math.max(180, initialWidth + moveEvent.clientX - startX));
                 grid.style.setProperty('--gantt-task-width', `${ganttTaskWidth}px`);
+                handle.setAttribute('aria-valuenow', Math.round(ganttTaskWidth));
             }
 
             function stop() {
@@ -832,6 +903,22 @@
             handle.addEventListener('pointermove', resize);
             handle.addEventListener('pointerup', stop);
             handle.addEventListener('pointercancel', stop);
+        }
+
+        function resizeTaskColumnFromKeyboard(event) {
+            const widths = {
+                ArrowLeft: ganttTaskWidth - 10,
+                ArrowRight: ganttTaskWidth + 10,
+                Home: 180,
+                End: 600
+            };
+            if (!(event.key in widths)) return;
+
+            event.preventDefault();
+            ganttTaskWidth = Math.min(600, Math.max(180, widths[event.key]));
+            event.target.closest('.gantt-grid').style.setProperty('--gantt-task-width', `${ganttTaskWidth}px`);
+            event.target.setAttribute('aria-valuenow', Math.round(ganttTaskWidth));
+            storePreference(ganttTaskWidthPreferenceKey, ganttTaskWidth);
         }
 
         function toggleProviderVisibility(providerName) {
@@ -855,9 +942,12 @@
         }
 
         function getSortIcon(dir) {
-            if (dir === 'desc') return 'arrow_downward';
-            if (dir === 'asc') return 'arrow_upward';
-            return 'filter_list_off';
+            const path = dir === 'desc'
+                ? '<path d="M12 5v14m0 0 5-5m-5 5-5-5"/>'
+                : (dir === 'asc'
+                    ? '<path d="M12 19V5m0 0 5 5m-5-5-5 5"/>'
+                    : '<path d="M5 7h14M8 12h8M11 17h2"/>');
+            return `<svg class="sort-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${path}</svg>`;
         }
 
         function nextSortDir(dir) {
@@ -962,36 +1052,58 @@
         function renderSortableHeader(label, key) {
             const dir = (sortState.key === key) ? sortState.dir : 'off';
             const icon = getSortIcon(dir);
-            return `<th><span class="th-label">${escapeHtml(label)}<button class="sort-btn" type="button" aria-label="Sort by ${escapeHtml(label)}" onclick="toggleSort('${key}')"><span class="material-symbols-outlined">${icon}</span></button></span></th>`;
+            const ariaSort = dir === 'off' ? '' : ` aria-sort="${dir === 'asc' ? 'ascending' : 'descending'}"`;
+            const currentOrder = dir === 'off' ? 'not selected' : dir === 'asc' ? 'ascending' : 'descending';
+            const nextOrder = nextSortDir(dir) === 'off' ? 'default order' : nextSortDir(dir) === 'asc' ? 'ascending' : 'descending';
+            const buttonLabel = `Sort by ${label}. Current order: ${currentOrder}. Activate for ${nextOrder}.`;
+            return `<th${ariaSort}><span class="th-label">${escapeHtml(label)}<button class="sort-btn" type="button" aria-label="${escapeAttribute(buttonLabel)}" onclick="toggleSort('${key}')">${icon}</button></span></th>`;
         }
 
-        async function refreshProvider(providerName) {
-            const card = document.querySelector(`.provider-card[data-provider="${providerName}"]`);
+        function setProviderStatus(card, online, label) {
+            const statusIndicator = card.querySelector('.status-indicator');
+            statusIndicator.className = 'status-indicator ' + (online ? 'online' : 'offline');
+            card.querySelector('.provider-status').textContent = label || (online ? 'Online' : 'Offline');
+        }
+
+        function setProviderError(card, message) {
+            const errorElement = card.querySelector('.provider-error');
+            errorElement.textContent = message;
+            errorElement.hidden = !message;
+        }
+
+        async function refreshProvider(providerName, card) {
             const btn = card.querySelector('.provider-refresh-btn');
-            const content = document.getElementById('issues-content');
-            const count = document.getElementById('issues-count');
 
             btn.disabled = true;
             btn.textContent = 'Loading...';
+            card.setAttribute('aria-busy', 'true');
+            setProviderError(card, '');
 
             try {
                 const response = await fetch('/api/provider/' + encodeURIComponent(providerName) + '/issues');
-                const data = await response.json();
+                let data;
+                try {
+                    data = await response.json();
+                } catch {
+                    throw new Error(`The server returned an unreadable response (${response.status}).`);
+                }
+                if (!response.ok || !data.status) {
+                    throw new Error(data.error || `The server returned HTTP ${response.status}.`);
+                }
 
                 // Update the provider card status
-                const statusIndicator = card.querySelector('.status-indicator');
-                statusIndicator.className = 'status-indicator ' + (data.status.online ? 'online' : 'offline');
+                setProviderStatus(card, data.status.online);
 
                 const providerNameEl = card.querySelector('.provider-name');
                 const countBadge = data.status.issue_count > 0 ? `<span class="task-count">${data.status.issue_count}</span>` : '';
-                providerNameEl.innerHTML = `${escapeHtml(data.status.name)} ${countBadge}`;
+                providerNameEl.innerHTML = `${escapeHtml(data.status.name)} ${countBadge}<span class="provider-status" role="status">${data.status.online ? 'Online' : 'Offline'}</span>`;
 
                 // Store issues for this provider
                 if (data.issues && data.issues.length > 0) {
                     issuesByProvider[providerName] = data.issues;
                 } else if (data.error) {
-                    // Keep old issues if there was an error, show error message
-                    console.error('Error fetching from', providerName, ':', data.error);
+                    // Keep old issues when refresh fails and clearly mark them as stale.
+                    setProviderError(card, `Could not refresh issues. Showing previously loaded data. ${data.error}`);
                 } else {
                     issuesByProvider[providerName] = [];
                 }
@@ -1000,12 +1112,12 @@
                 renderAllIssues();
 
             } catch (error) {
-                console.error('Failed to fetch issues from', providerName, ':', error);
-                const statusIndicator = card.querySelector('.status-indicator');
-                statusIndicator.className = 'status-indicator offline';
+                setProviderStatus(card, false, 'Refresh failed');
+                setProviderError(card, `Could not refresh issues. Showing previously loaded data. ${error.message}`);
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Refresh';
+                card.removeAttribute('aria-busy');
             }
         }
 
@@ -1113,7 +1225,7 @@
             html += '<span class="gantt-period-label">Scroll to explore all task dates</span></div>';
             html += `<div class="gantt-scroll"><div class="gantt-grid" style="--gantt-task-width: ${ganttTaskWidth}px; grid-template-columns: ${columns}; grid-template-rows: 32px 30px repeat(${issues.length}, 36px); width: max(100%, calc(var(--gantt-task-width) + ${minWidth}px));">`;
             html += '<div class="gantt-task-header" style="grid-column: 1; grid-row: 1 / 3;">Task</div>';
-            html += `<div class="gantt-resize-handle" style="grid-column: 1; grid-row: 1 / ${issues.length + 3};" onpointerdown="startTaskColumnResize(event)" aria-label="Resize task column" role="separator"></div>`;
+            html += `<div class="gantt-resize-handle" style="grid-column: 1; grid-row: 1 / ${issues.length + 3};" tabindex="0" aria-label="Task column width" aria-orientation="vertical" aria-valuemin="180" aria-valuemax="600" aria-valuenow="${Math.round(ganttTaskWidth)}" role="separator"></div>`;
 
             let monthStartIndex = 0;
             for (let index = 1; index <= dayCount; index++) {
@@ -1157,7 +1269,7 @@
                 const startIndex = Math.round((visibleStart - start) / 86400000);
                 const endIndex = Math.round((visibleEnd - start) / 86400000);
                 const title = `${issue.title}: ${visibleStart.toISOString().slice(0, 10)} to ${visibleEnd.toISOString().slice(0, 10)}`;
-                html += `<div class="gantt-bar" style="--provider-color: ${color}; grid-column: ${startIndex + 2} / ${endIndex + 3}; grid-row: ${row};" title="${escapeAttribute(title)}">${escapeHtml(issue.title)}</div>`;
+                html += `<div class="gantt-bar" style="--provider-color: ${color}; color: ${getReadableTextColor(color)}; grid-column: ${startIndex + 2} / ${endIndex + 3}; grid-row: ${row};" title="${escapeAttribute(title)}">${escapeHtml(issue.title)}</div>`;
             });
 
             const scrollDate = ganttScrollDate || today.toISOString().slice(0, 10);
