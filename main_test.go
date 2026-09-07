@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -144,5 +146,59 @@ func TestFetchJiraCloudIssuesNormalizesStartDate(t *testing.T) {
 	}
 	if issues[1].StartAt != nil {
 		t.Fatalf("second issue StartAt = %v, want nil", issues[1].StartAt)
+	}
+}
+
+func TestResolveProviderTokensFromFileAndProgram(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "gitlab.token"), []byte("file-secret\n"), 0o600); err != nil {
+		t.Fatalf("writing token file: %v", err)
+	}
+	config := Config{TaskProviders: []TaskProvider{
+		{Name: "GitLab", TokenFile: "gitlab.token"},
+		{Name: "Jira", TokenProg: "printf prog-secret\\r\\n"},
+	}}
+
+	if err := resolveProviderTokens(&config, dir); err != nil {
+		t.Fatalf("resolveProviderTokens() error = %v", err)
+	}
+	if got := config.TaskProviders[0].Token; got != "file-secret" {
+		t.Fatalf("file token = %q, want %q", got, "file-secret")
+	}
+	if got := config.TaskProviders[1].Token; got != "prog-secret" {
+		t.Fatalf("program token = %q, want %q", got, "prog-secret")
+	}
+}
+
+func TestResolveProviderTokensRejectsMultipleSources(t *testing.T) {
+	config := Config{TaskProviders: []TaskProvider{{
+		Name:      "GitLab",
+		Token:     "inline",
+		TokenFile: "secret.txt",
+	}}}
+
+	err := resolveProviderTokens(&config, t.TempDir())
+	if err == nil || !strings.Contains(err.Error(), "only one") {
+		t.Fatalf("resolveProviderTokens() error = %v, want source exclusivity error", err)
+	}
+}
+
+func TestResolveProviderTokensRejectsMultilineSecret(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "token"), []byte("\nsecret\n"), 0o600); err != nil {
+		t.Fatalf("writing token file: %v", err)
+	}
+	config := Config{TaskProviders: []TaskProvider{{Name: "GitLab", TokenFile: "token"}}}
+	if err := resolveProviderTokens(&config, dir); err == nil || !strings.Contains(err.Error(), "multiple lines") {
+		t.Fatalf("multiline token error = %v, want multiple lines error", err)
+	}
+}
+
+func TestRunTokenProgramBoundsOutputAndRuntime(t *testing.T) {
+	if _, err := runTokenProgram("head -c 9000 /dev/zero", t.TempDir(), time.Second); err == nil || !strings.Contains(err.Error(), "exceeds") {
+		t.Fatalf("oversized token-prog error = %v, want output limit error", err)
+	}
+	if _, err := runTokenProgram("sleep 1", t.TempDir(), 20*time.Millisecond); err == nil || !strings.Contains(err.Error(), "timed out") {
+		t.Fatalf("slow token-prog error = %v, want timeout error", err)
 	}
 }

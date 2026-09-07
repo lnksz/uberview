@@ -10,14 +10,14 @@ task_providers:
   - type: "gitlab"
     name: "GitLab"
     url: "https://gitlab.com"
-    token: "your-gitlab-personal-access-token"
+    token-file: "secrets/gitlab.token"
     user: "your-username"
 
   # Jira Cloud example
   - type: "jira_cloud"
     name: "Jira Cloud"
     url: "https://your-company.atlassian.net"
-    token: "your-jira-api-token"
+    token-prog: "pass show jira-api-token"
     email: "your-email@company.com"
     user: "your-email@company.com"
 
@@ -31,8 +31,12 @@ task_providers:
     # token: "your-jira-pat"
 
 # Notes:
+# - Configure at most one token source per provider: token, token-file, or token-prog
+# - Relative token-file paths are resolved relative to this configuration file
+# - token-prog runs once at startup without a shell and must print exactly one non-empty line;
+#   trailing CR/LF characters are trimmed
 # - GitLab: token is a Personal Access Token with 'read_api' scope
 # - Jira Cloud: token is an API token (https://id.atlassian.com/manage-profile/security/api-tokens)
 #   email is your Atlassian account email, user is typically the same as email
 # - Jira Server: uses username/password or Personal Access Token (PAT) for authentication
-#   If both password and token are provided, password takes precedence
+#   If both password and a token source are provided, the token takes precedence

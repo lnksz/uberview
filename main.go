@@ -11,6 +11,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
@@ -32,15 +34,18 @@ const (
 	TaskProviderGitLab     TaskProviderType = "gitlab"
 	TaskProviderJiraCloud  TaskProviderType = "jira_cloud"
 	TaskProviderJiraServer TaskProviderType = "jira_server"
+	maxTokenOutput                          = 8192
 )
 
 // TaskProvider represents a task provider configuration
 type TaskProvider struct {
-	Type  TaskProviderType `yaml:"type"`
-	Name  string           `yaml:"name"`
-	URL   string           `yaml:"url"`
-	Token string           `yaml:"token"`
-	User  string           `yaml:"user"`
+	Type      TaskProviderType `yaml:"type"`
+	Name      string           `yaml:"name"`
+	URL       string           `yaml:"url"`
+	Token     string           `yaml:"token"`
+	TokenFile string           `yaml:"token-file"`
+	TokenProg string           `yaml:"token-prog"`
+	User      string           `yaml:"user"`
 	// Jira specific fields
 	Email    string `yaml:"email"`    // Required for Jira Cloud API authentication
 	Password string `yaml:"password"` // Required for Jira Server API authentication (or use Token for PAT)
@@ -190,6 +195,24 @@ type App struct {
 	client *http.Client
 }
 
+type boundedBuffer struct {
+	buffer   bytes.Buffer
+	limit    int
+	exceeded bool
+}
+
+func (b *boundedBuffer) Write(data []byte) (int, error) {
+	remaining := b.limit - b.buffer.Len()
+	if remaining > 0 {
+		writeLen := min(len(data), remaining)
+		_, _ = b.buffer.Write(data[:writeLen])
+	}
+	if len(data) > remaining {
+		b.exceeded = true
+	}
+	return len(data), nil
+}
+
 func loadConfig(path string) (Config, error) {
 	var config Config
 
@@ -207,8 +230,91 @@ func loadConfig(path string) (Config, error) {
 	if config.Server.Port == 0 {
 		config.Server.Port = 8080
 	}
+	if err := resolveProviderTokens(&config, filepath.Dir(path)); err != nil {
+		return config, err
+	}
 
 	return config, nil
+}
+
+func resolveProviderTokens(config *Config, configDir string) error {
+	for i := range config.TaskProviders {
+		provider := &config.TaskProviders[i]
+		sources := 0
+		if provider.Token != "" {
+			sources++
+		}
+		if provider.TokenFile != "" {
+			sources++
+		}
+		if provider.TokenProg != "" {
+			sources++
+		}
+		if sources > 1 {
+			return fmt.Errorf("provider %q: configure only one of token, token-file, or token-prog", provider.Name)
+		}
+
+		var token string
+		switch {
+		case provider.TokenFile != "":
+			path := provider.TokenFile
+			if !filepath.IsAbs(path) {
+				path = filepath.Join(configDir, path)
+			}
+			data, err := os.ReadFile(path)
+			if err != nil {
+				return fmt.Errorf("provider %q: reading token-file: %w", provider.Name, err)
+			}
+			token = string(data)
+		case provider.TokenProg != "":
+			output, err := runTokenProgram(provider.TokenProg, configDir, 10*time.Second)
+			if err != nil {
+				return fmt.Errorf("provider %q: %w", provider.Name, err)
+			}
+			token = output
+		default:
+			token = provider.Token
+		}
+
+		if sources == 0 {
+			continue
+		}
+		token = strings.TrimRight(token, "\r\n")
+		if strings.ContainsAny(token, "\r\n") {
+			return fmt.Errorf("provider %q: token source returned multiple lines", provider.Name)
+		}
+		token = strings.TrimSpace(token)
+		if token == "" {
+			return fmt.Errorf("provider %q: token source returned an empty value", provider.Name)
+		}
+		provider.Token = token
+	}
+	return nil
+}
+
+func runTokenProgram(command, dir string, timeout time.Duration) (string, error) {
+	args := strings.Fields(command)
+	if len(args) == 0 {
+		return "", fmt.Errorf("token-prog is empty")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, args[0], args[1:]...)
+	cmd.Dir = dir
+	cmd.WaitDelay = time.Second
+	output := &boundedBuffer{limit: maxTokenOutput}
+	cmd.Stdout = output
+	err := cmd.Run()
+	if ctx.Err() == context.DeadlineExceeded {
+		return "", fmt.Errorf("token-prog timed out")
+	}
+	if err != nil {
+		return "", fmt.Errorf("token-prog failed: %w", err)
+	}
+	if output.exceeded {
+		return "", fmt.Errorf("token-prog output exceeds %d bytes", maxTokenOutput)
+	}
+	return output.buffer.String(), nil
 }
 
 // checkProviderStatus checks if a single task provider server is reachable

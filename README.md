@@ -17,6 +17,7 @@ but help keep me sane with keeping the overview (GER = "Überblick") of my tasks
 - Auto light/dark theme based on system preference
 - Per-provider refresh buttons
 - Real-time provider status indicators
+- Inline, file-backed, or command-backed provider tokens
 
 ## Usage
 
@@ -84,13 +85,13 @@ task_providers:
   - type: "gitlab"
     name: "GitLab"
     url: "https://10.0.0.1"
-    token: "glpat-xxxx"
+    token-file: "secrets/gitlab.token"
     user: "username"
 
   - type: "jira_cloud"
     name: "Jira Cloud"
     url: "https://company.atlassian.net"
-    token: "jira-api-token"
+    token-prog: "pass show jira-api-token"
     email: "user@company.com"
     user: "Jon Doe"
 
@@ -105,9 +106,11 @@ task_providers:
 
 | Provider | Authentication |
 |----------|----------------|
-| GitLab | Personal Access Token (`token`) |
-| Jira Cloud | Email + API Token (Basic Auth) |
-| Jira Server | Personal Access Token (Bearer) or username:password (Basic Auth) |
+| GitLab | Personal Access Token from `token`, `token-file`, or `token-prog` |
+| Jira Cloud | Email + API token from `token`, `token-file`, or `token-prog` |
+| Jira Server | PAT from `token`, `token-file`, or `token-prog`; or username:password |
+
+Configure no more than one token source for each provider. Relative `token-file` paths are resolved next to the configuration file. `token-prog` is split into an executable and whitespace-separated arguments, runs once at startup without a shell, and must print exactly one non-empty line. Trailing CR/LF characters are trimmed, so normal command output ending in a newline works directly. Its output is kept in memory.
 
 ## Development
 
