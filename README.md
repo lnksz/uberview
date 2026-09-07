@@ -17,6 +17,7 @@ but help keep me sane with keeping the overview (GER = "Überblick") of my tasks
 - Auto light/dark theme based on system preference
 - Per-provider refresh buttons
 - Real-time provider status indicators
+- 15-second SQLite issue cache in `sqlite.db`
 - Inline, file-backed, or command-backed provider tokens
 
 ## Usage
@@ -110,7 +111,9 @@ task_providers:
 | Jira Cloud | Email + API token from `token`, `token-file`, or `token-prog` |
 | Jira Server | PAT from `token`, `token-file`, or `token-prog`; or username:password |
 
-Configure no more than one token source for each provider. Relative `token-file` paths are resolved next to the configuration file. `token-prog` is split into an executable and whitespace-separated arguments, runs once at startup without a shell, and must print exactly one non-empty line. Trailing CR/LF characters are trimmed, so normal command output ending in a newline works directly. Its output is kept in memory.
+Configure no more than one token source for each provider. Relative `token-file` paths are resolved next to the configuration file. `token-prog` is split into an executable and whitespace-separated arguments, runs once at startup without a shell, and must print exactly one non-empty line. Trailing CR/LF characters are trimmed, so normal command output ending in a newline works directly. Its output is kept in memory and is never written to `sqlite.db`.
+
+Successful provider issue responses are cached for 15 seconds in `sqlite.db`, created with mode `0600` in the process working directory. The cache stores normalized issue data only; it does not store provider credentials. Run Uberview from a private directory because ticket titles and metadata may themselves be sensitive.
 
 ## Development
 

@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"database/sql"
 	"embed"
 	"encoding/base64"
 	"encoding/json"
@@ -19,6 +21,7 @@ import (
 	"time"
 
 	"gopkg.in/yaml.v3"
+	_ "modernc.org/sqlite"
 )
 
 //go:embed index.html
@@ -34,6 +37,7 @@ const (
 	TaskProviderGitLab     TaskProviderType = "gitlab"
 	TaskProviderJiraCloud  TaskProviderType = "jira_cloud"
 	TaskProviderJiraServer TaskProviderType = "jira_server"
+	issueCacheTTL                           = 15 * time.Second
 	maxTokenOutput                          = 8192
 )
 
@@ -187,12 +191,28 @@ type ProviderStatus struct {
 	Online     bool   `json:"online"`
 	IssueCount int    `json:"issue_count"`
 	Error      string `json:"error,omitempty"`
+	Cached     bool   `json:"cached,omitempty"`
 }
 
 // App holds the application state
 type App struct {
-	config Config
-	client *http.Client
+	config  Config
+	client  *http.Client
+	cache   *IssueCache
+	fetchMu sync.Mutex
+	fetches map[string]*providerFetch
+}
+
+type IssueCache struct {
+	db  *sql.DB
+	ttl time.Duration
+}
+
+type providerFetch struct {
+	done   chan struct{}
+	issues []Issue
+	cached bool
+	err    error
 }
 
 type boundedBuffer struct {
@@ -315,6 +335,148 @@ func runTokenProgram(command, dir string, timeout time.Duration) (string, error)
 		return "", fmt.Errorf("token-prog output exceeds %d bytes", maxTokenOutput)
 	}
 	return output.buffer.String(), nil
+}
+
+func openIssueCache(path string, ttl time.Duration) (*IssueCache, error) {
+	if path != ":memory:" {
+		if info, err := os.Lstat(path); err == nil && info.Mode()&os.ModeSymlink != 0 {
+			return nil, fmt.Errorf("opening issue cache: refusing symlink %q", path)
+		} else if err != nil && !os.IsNotExist(err) {
+			return nil, fmt.Errorf("inspecting issue cache: %w", err)
+		}
+		file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0o600)
+		if err != nil {
+			return nil, fmt.Errorf("creating issue cache: %w", err)
+		}
+		if err := file.Chmod(0o600); err != nil {
+			file.Close()
+			return nil, fmt.Errorf("securing issue cache: %w", err)
+		}
+		if err := file.Close(); err != nil {
+			return nil, fmt.Errorf("closing issue cache before initialization: %w", err)
+		}
+	}
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		return nil, fmt.Errorf("opening issue cache: %w", err)
+	}
+	db.SetMaxOpenConns(1)
+	if _, err := db.Exec(`
+		CREATE TABLE IF NOT EXISTS issue_cache (
+			provider_key TEXT PRIMARY KEY,
+			issues_json BLOB NOT NULL,
+			fetched_at INTEGER NOT NULL
+		)`); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("initializing issue cache: %w", err)
+	}
+	return &IssueCache{db: db, ttl: ttl}, nil
+}
+
+func (a *App) fetchProviderIssues(provider TaskProvider) ([]Issue, bool, error) {
+	key := providerCacheKey(provider)
+	a.fetchMu.Lock()
+	if a.fetches == nil {
+		a.fetches = make(map[string]*providerFetch)
+	}
+	if fetch := a.fetches[key]; fetch != nil {
+		a.fetchMu.Unlock()
+		<-fetch.done
+		return fetch.issues, fetch.cached, fetch.err
+	}
+	fetch := &providerFetch{done: make(chan struct{})}
+	a.fetches[key] = fetch
+	a.fetchMu.Unlock()
+
+	fetch.issues, fetch.cached, fetch.err = a.fetchProviderIssuesOnce(provider)
+	a.fetchMu.Lock()
+	delete(a.fetches, key)
+	close(fetch.done)
+	a.fetchMu.Unlock()
+	return fetch.issues, fetch.cached, fetch.err
+}
+
+func (a *App) fetchProviderIssuesOnce(provider TaskProvider) ([]Issue, bool, error) {
+	issues, cached, err := a.cache.Get(provider)
+	if err != nil {
+		log.Printf("WARNING: Ignoring issue cache read failure for provider %q: %v", provider.Name, err)
+	} else if cached {
+		return issues, true, nil
+	}
+
+	switch provider.Type {
+	case TaskProviderGitLab:
+		issues, err = a.fetchGitLabIssues(provider)
+	case TaskProviderJiraCloud:
+		issues, err = a.fetchJiraCloudIssues(provider)
+	case TaskProviderJiraServer:
+		issues, err = a.fetchJiraServerIssues(provider)
+	default:
+		err = fmt.Errorf("unsupported task provider type: %s", provider.Type)
+	}
+	if err != nil {
+		return nil, false, err
+	}
+	if err := a.cache.Put(provider, issues); err != nil {
+		log.Printf("WARNING: Failed to update issue cache for provider %q: %v", provider.Name, err)
+	}
+	return issues, false, nil
+}
+
+func providerCacheKey(provider TaskProvider) string {
+	identity := strings.Join([]string{
+		string(provider.Type), provider.Name, provider.URL, provider.User, provider.Email,
+	}, "\x00")
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(identity)))
+}
+
+func (c *IssueCache) Get(provider TaskProvider) ([]Issue, bool, error) {
+	if c == nil {
+		return nil, false, nil
+	}
+	var data []byte
+	var fetchedAt int64
+	err := c.db.QueryRow(
+		"SELECT issues_json, fetched_at FROM issue_cache WHERE provider_key = ?",
+		providerCacheKey(provider),
+	).Scan(&data, &fetchedAt)
+	if err == sql.ErrNoRows {
+		return nil, false, nil
+	}
+	if err != nil {
+		return nil, false, fmt.Errorf("reading issue cache: %w", err)
+	}
+	age := time.Since(time.Unix(0, fetchedAt))
+	if age < 0 || age >= c.ttl {
+		return nil, false, nil
+	}
+	var issues []Issue
+	if err := json.Unmarshal(data, &issues); err != nil {
+		return nil, false, fmt.Errorf("decoding issue cache: %w", err)
+	}
+	return issues, true, nil
+}
+
+func (c *IssueCache) Put(provider TaskProvider, issues []Issue) error {
+	if c == nil {
+		return nil
+	}
+	data, err := json.Marshal(issues)
+	if err != nil {
+		return fmt.Errorf("encoding issue cache: %w", err)
+	}
+	_, err = c.db.Exec(`
+		INSERT INTO issue_cache (provider_key, issues_json, fetched_at)
+		VALUES (?, ?, ?)
+		ON CONFLICT(provider_key) DO UPDATE SET
+			issues_json = excluded.issues_json,
+			fetched_at = excluded.fetched_at`,
+		providerCacheKey(provider), data, time.Now().UnixNano(),
+	)
+	if err != nil {
+		return fmt.Errorf("writing issue cache: %w", err)
+	}
+	return nil
 }
 
 // checkProviderStatus checks if a single task provider server is reachable
@@ -445,25 +607,15 @@ func (a *App) fetchAllIssues() ([]Issue, []ProviderStatus, error) {
 			defer wg.Done()
 
 			var issues []Issue
-			var err error
-
-			switch p.Type {
-			case TaskProviderGitLab:
-				issues, err = a.fetchGitLabIssues(p)
-			case TaskProviderJiraCloud:
-				issues, err = a.fetchJiraCloudIssues(p)
-			case TaskProviderJiraServer:
-				issues, err = a.fetchJiraServerIssues(p)
-			default:
-				err = fmt.Errorf("unsupported task provider type: %s", p.Type)
-			}
+			issues, cached, err := a.fetchProviderIssues(p)
 
 			status := ProviderStatus{
 				Name:       p.Name,
 				URL:        p.URL,
 				Type:       string(p.Type),
-				Online:     err == nil,
+				Online:     err == nil && !cached,
 				IssueCount: len(issues),
+				Cached:     cached,
 			}
 
 			mu.Lock()
@@ -905,20 +1057,7 @@ func (a *App) handleProviderIssues(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fetch issues from this provider
-	var issues []Issue
-	var fetchErr error
-
-	switch provider.Type {
-	case TaskProviderGitLab:
-		issues, fetchErr = a.fetchGitLabIssues(*provider)
-	case TaskProviderJiraCloud:
-		issues, fetchErr = a.fetchJiraCloudIssues(*provider)
-	case TaskProviderJiraServer:
-		issues, fetchErr = a.fetchJiraServerIssues(*provider)
-	default:
-		fetchErr = fmt.Errorf("unsupported task provider type: %s", provider.Type)
-	}
+	issues, cached, fetchErr := a.fetchProviderIssues(*provider)
 
 	sortIssuesDefault(issues)
 
@@ -926,8 +1065,9 @@ func (a *App) handleProviderIssues(w http.ResponseWriter, r *http.Request) {
 		Name:       provider.Name,
 		URL:        provider.URL,
 		Type:       string(provider.Type),
-		Online:     fetchErr == nil,
+		Online:     fetchErr == nil && !cached,
 		IssueCount: len(issues),
+		Cached:     cached,
 	}
 
 	response := struct {
@@ -961,6 +1101,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
+	cache, err := openIssueCache("sqlite.db", issueCacheTTL)
+	if err != nil {
+		log.Fatalf("Failed to initialize issue cache: %v", err)
+	}
+	defer cache.db.Close()
 
 	// Create app instance
 	app := &App{
@@ -968,6 +1113,7 @@ func main() {
 		client: &http.Client{
 			Timeout: 30 * time.Second,
 		},
+		cache: cache,
 	}
 
 	// Check provider status at startup

@@ -36,6 +36,7 @@ Uberview is a provider-neutral personal overview rather than another system of r
 - It must remain deployable as a single Go binary with the frontend embedded and no runtime application dependencies.
 - Provider credentials remain in the local YAML configuration; their storage and host security are the operator's responsibility.
 - Provider tokens may be supplied inline, read from a file, or resolved by a local command at startup; resolved secrets remain in memory.
+- Successful issue responses are cached without credentials in a local SQLite database for 15 seconds.
 - The interface follows the browser's light or dark system preference.
 
 ## Brand Commitments

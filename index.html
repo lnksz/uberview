@@ -215,6 +215,10 @@
             background-color: var(--error);
         }
 
+        .status-indicator.cached {
+            background-color: #f59e0b;
+        }
+
         .provider-info {
             flex: 1;
             min-width: 0;
@@ -786,8 +790,8 @@
         }
 
         function renderProviderCard(status) {
-            const statusClass = status.online ? 'online' : 'offline';
-            const statusLabel = status.online ? 'Online' : 'Offline';
+            const statusClass = status.cached ? 'cached' : (status.online ? 'online' : 'offline');
+            const statusLabel = status.cached ? 'Cached' : (status.online ? 'Online' : 'Offline');
             const countBadge = status.issue_count > 0 ? `<span class="task-count">${status.issue_count}</span>` : '';
             const errorMessage = status.online ? '' : (status.error || 'Provider unavailable');
             const color = getProviderColor(status.name);
@@ -1059,9 +1063,9 @@
             return `<th${ariaSort}><span class="th-label">${escapeHtml(label)}<button class="sort-btn" type="button" aria-label="${escapeAttribute(buttonLabel)}" onclick="toggleSort('${key}')">${icon}</button></span></th>`;
         }
 
-        function setProviderStatus(card, online, label) {
+        function setProviderStatus(card, online, label, cached = false) {
             const statusIndicator = card.querySelector('.status-indicator');
-            statusIndicator.className = 'status-indicator ' + (online ? 'online' : 'offline');
+            statusIndicator.className = 'status-indicator ' + (cached ? 'cached' : (online ? 'online' : 'offline'));
             card.querySelector('.provider-status').textContent = label || (online ? 'Online' : 'Offline');
         }
 
@@ -1092,11 +1096,12 @@
                 }
 
                 // Update the provider card status
-                setProviderStatus(card, data.status.online);
+                const statusLabel = data.status.cached ? 'Cached' : (data.status.online ? 'Online' : 'Offline');
+                setProviderStatus(card, data.status.online, statusLabel, data.status.cached);
 
                 const providerNameEl = card.querySelector('.provider-name');
                 const countBadge = data.status.issue_count > 0 ? `<span class="task-count">${data.status.issue_count}</span>` : '';
-                providerNameEl.innerHTML = `${escapeHtml(data.status.name)} ${countBadge}<span class="provider-status" role="status">${data.status.online ? 'Online' : 'Offline'}</span>`;
+                providerNameEl.innerHTML = `${escapeHtml(data.status.name)} ${countBadge}<span class="provider-status" role="status">${statusLabel}</span>`;
 
                 // Store issues for this provider
                 if (data.issues && data.issues.length > 0) {

@@ -1,2 +1,5 @@
 config.yaml
 uberview
+sqlite.db
+sqlite.db-shm
+sqlite.db-wal
