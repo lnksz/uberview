@@ -13,6 +13,7 @@ but help keep me sane with keeping the overview (GER = "Überblick") of my tasks
 
 - Single binary, no dependencies
 - Supports GitLab, Jira Cloud, and Jira Server
+- Shows GitLab configurable work item statuses when available
 - Auto light/dark theme based on system preference
 - Per-provider refresh buttons
 - Real-time provider status indicators

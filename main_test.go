@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -10,14 +11,32 @@ import (
 
 func TestFetchGitLabIssuesNormalizesStartDate(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/api/v4/issues" {
+		switch r.URL.Path {
+		case "/api/v4/issues":
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`[
+				{"id":101,"title":"Scheduled work","state":"opened","web_url":"https://gitlab.example/issues/1","created_at":"2026-01-02T12:00:00Z","updated_at":"2026-01-02T12:00:00Z","start_date":"2026-03-10","due_date":"2026-03-20"},
+				{"id":102,"title":"Unscheduled work","state":"opened","web_url":"https://gitlab.example/issues/2","created_at":"2026-01-03T12:00:00Z","updated_at":"2026-01-03T12:00:00Z"}
+			]`))
+		case "/api/graphql":
+			if r.Method != http.MethodPost {
+				t.Errorf("GraphQL method = %s, want POST", r.Method)
+			}
+			var request struct {
+				Query string `json:"query"`
+			}
+			if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+				t.Errorf("decoding GraphQL request: %v", err)
+			}
+			if !strings.Contains(request.Query, "gid://gitlab/WorkItem/101") {
+				t.Errorf("GraphQL query does not request the GitLab work item: %s", request.Query)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"data":{"i0":{"widgets":[{"__typename":"WorkItemWidgetStatus","status":{"name":"In progress"}}]},"i1":{"widgets":[]}}}`))
+		default:
 			t.Errorf("unexpected path: %s", r.URL.Path)
+			http.NotFound(w, r)
 		}
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`[
-			{"title":"Scheduled work","web_url":"https://gitlab.example/issues/1","created_at":"2026-01-02T12:00:00Z","updated_at":"2026-01-02T12:00:00Z","start_date":"2026-03-10","due_date":"2026-03-20"},
-			{"title":"Unscheduled work","web_url":"https://gitlab.example/issues/2","created_at":"2026-01-03T12:00:00Z","updated_at":"2026-01-03T12:00:00Z"}
-		]`))
 	}))
 	defer server.Close()
 
@@ -43,6 +62,42 @@ func TestFetchGitLabIssuesNormalizesStartDate(t *testing.T) {
 	}
 	if issues[1].StartAt != nil {
 		t.Fatalf("second issue StartAt = %v, want nil", issues[1].StartAt)
+	}
+	if issues[0].Status != "In progress" {
+		t.Errorf("first issue Status = %q, want work item status", issues[0].Status)
+	}
+	if issues[1].Status != "opened" {
+		t.Errorf("second issue Status = %q, want state fallback", issues[1].Status)
+	}
+}
+
+func TestFetchGitLabWorkItemStatusesKeepsCompletedBatches(t *testing.T) {
+	requestCount := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestCount++
+		w.Header().Set("Content-Type", "application/json")
+		if requestCount == 1 {
+			_, _ = w.Write([]byte(`{"data":{"i0":{"widgets":[{"__typename":"WorkItemWidgetStatus","status":{"name":"In progress"}}]}}}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"data":{},"errors":[{"message":"status unavailable"}]}`))
+	}))
+	defer server.Close()
+
+	issues := make([]GitLabIssue, 26)
+	for i := range issues {
+		issues[i].ID = i + 1
+	}
+	app := &App{client: server.Client()}
+	statuses, err := app.fetchGitLabWorkItemStatuses(TaskProvider{URL: server.URL}, issues)
+	if err == nil {
+		t.Fatal("fetchGitLabWorkItemStatuses() error = nil, want second-batch error")
+	}
+	if requestCount != 2 {
+		t.Fatalf("GraphQL requests = %d, want 2", requestCount)
+	}
+	if statuses[1] != "In progress" {
+		t.Fatalf("first-batch status = %q, want In progress", statuses[1])
 	}
 }
 

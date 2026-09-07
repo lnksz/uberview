@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"context"
 	"embed"
 	"encoding/base64"
 	"encoding/json"
@@ -76,6 +78,22 @@ type GitLabIssue struct {
 		Username string `json:"username"`
 		Name     string `json:"name"`
 	} `json:"author"`
+}
+
+type gitLabGraphQLResponse struct {
+	Data   map[string]gitLabWorkItem `json:"data"`
+	Errors []struct {
+		Message string `json:"message"`
+	} `json:"errors"`
+}
+
+type gitLabWorkItem struct {
+	Widgets []struct {
+		TypeName string `json:"__typename"`
+		Status   *struct {
+			Name string `json:"name"`
+		} `json:"status"`
+	} `json:"widgets"`
 }
 
 // JiraSearchResponse represents the Jira Cloud search API response
@@ -398,15 +416,21 @@ func (a *App) fetchGitLabIssues(provider TaskProvider) ([]Issue, error) {
 		if err != nil {
 			return nil, fmt.Errorf("fetching issues: %w", err)
 		}
-		defer resp.Body.Close()
-
 		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
 			return nil, fmt.Errorf("GitLab API returned status %d", resp.StatusCode)
 		}
 
 		var gitlabIssues []GitLabIssue
-		if err := json.NewDecoder(resp.Body).Decode(&gitlabIssues); err != nil {
-			return nil, fmt.Errorf("decoding issues: %w", err)
+		decodeErr := json.NewDecoder(resp.Body).Decode(&gitlabIssues)
+		resp.Body.Close()
+		if decodeErr != nil {
+			return nil, fmt.Errorf("decoding issues: %w", decodeErr)
+		}
+
+		workItemStatuses, err := a.fetchGitLabWorkItemStatuses(provider, gitlabIssues)
+		if err != nil {
+			log.Printf("Could not fetch GitLab work item statuses from %s: %v", provider.Name, err)
 		}
 
 		for _, gi := range gitlabIssues {
@@ -424,11 +448,16 @@ func (a *App) fetchGitLabIssues(provider TaskProvider) ([]Issue, error) {
 				}
 			}
 
+			status := workItemStatuses[gi.ID]
+			if status == "" {
+				status = gi.State
+			}
+
 			issue := Issue{
 				Source:    provider.Name,
 				Title:     gi.Title,
 				WebURL:    gi.WebURL,
-				Status:    gi.State,
+				Status:    status,
 				Labels:    gi.Labels,
 				CreatedAt: gi.CreatedAt,
 				UpdatedAt: gi.UpdatedAt,
@@ -445,6 +474,73 @@ func (a *App) fetchGitLabIssues(provider TaskProvider) ([]Issue, error) {
 	}
 
 	return allIssues, nil
+}
+
+func (a *App) fetchGitLabWorkItemStatuses(provider TaskProvider, issues []GitLabIssue) (map[int]string, error) {
+	const batchSize = 25
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	statuses := make(map[int]string, len(issues))
+	validIssues := make([]GitLabIssue, 0, len(issues))
+	for _, issue := range issues {
+		if issue.ID > 0 {
+			validIssues = append(validIssues, issue)
+		}
+	}
+	issues = validIssues
+
+	for start := 0; start < len(issues); start += batchSize {
+		end := min(start+batchSize, len(issues))
+		var query strings.Builder
+		query.WriteString("query {")
+		for i, issue := range issues[start:end] {
+			fmt.Fprintf(&query, " i%d: workItem(id: \"gid://gitlab/WorkItem/%d\") { widgets { __typename ... on WorkItemWidgetStatus { status { name } } } }", i, issue.ID)
+		}
+		query.WriteString(" }")
+
+		body, err := json.Marshal(map[string]string{"query": query.String()})
+		if err != nil {
+			return statuses, fmt.Errorf("encoding GraphQL request: %w", err)
+		}
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, provider.URL+"/api/graphql", bytes.NewReader(body))
+		if err != nil {
+			return statuses, fmt.Errorf("creating GraphQL request: %w", err)
+		}
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("PRIVATE-TOKEN", provider.Token)
+
+		resp, err := a.client.Do(req)
+		if err != nil {
+			return statuses, fmt.Errorf("fetching work item statuses: %w", err)
+		}
+
+		var result gitLabGraphQLResponse
+		decodeErr := json.NewDecoder(resp.Body).Decode(&result)
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			return statuses, fmt.Errorf("GitLab GraphQL API returned status %d", resp.StatusCode)
+		}
+		if decodeErr != nil {
+			return statuses, fmt.Errorf("decoding work item statuses: %w", decodeErr)
+		}
+
+		for i, issue := range issues[start:end] {
+			for _, widget := range result.Data[fmt.Sprintf("i%d", i)].Widgets {
+				if widget.TypeName == "WorkItemWidgetStatus" && widget.Status != nil && widget.Status.Name != "" {
+					statuses[issue.ID] = widget.Status.Name
+					break
+				}
+			}
+		}
+		if len(result.Errors) > 0 {
+			return statuses, fmt.Errorf("GitLab GraphQL API: %s", result.Errors[0].Message)
+		}
+	}
+
+	return statuses, nil
 }
 
 // fetchJiraCloudIssues fetches all open issues from Jira Cloud assigned to the configured user
