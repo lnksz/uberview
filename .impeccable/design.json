@@ -1,0 +1,146 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-07T14:23:03+00:00",
+  "title": "Design System: Uberview",
+  "extensions": {
+    "colorMeta": {
+      "workbench": { "role": "neutral", "displayName": "Workbench", "tonalRamp": ["color-mix(in srgb, #1e1f1c 25%, black)", "color-mix(in srgb, #1e1f1c 40%, black)", "color-mix(in srgb, #1e1f1c 55%, black)", "color-mix(in srgb, #1e1f1c 70%, black)", "color-mix(in srgb, #1e1f1c 85%, black)", "#1e1f1c", "color-mix(in srgb, #1e1f1c 75%, white)", "color-mix(in srgb, #1e1f1c 35%, white)"] },
+      "panel": { "role": "neutral", "displayName": "Panel", "tonalRamp": ["color-mix(in srgb, #272822 25%, black)", "color-mix(in srgb, #272822 40%, black)", "color-mix(in srgb, #272822 55%, black)", "color-mix(in srgb, #272822 70%, black)", "color-mix(in srgb, #272822 85%, black)", "#272822", "color-mix(in srgb, #272822 75%, white)", "color-mix(in srgb, #272822 35%, white)"] },
+      "ink": { "role": "neutral", "displayName": "Ink", "tonalRamp": ["color-mix(in srgb, #f8f8f2 25%, black)", "color-mix(in srgb, #f8f8f2 40%, black)", "color-mix(in srgb, #f8f8f2 55%, black)", "color-mix(in srgb, #f8f8f2 70%, black)", "color-mix(in srgb, #f8f8f2 85%, black)", "#f8f8f2", "color-mix(in srgb, #f8f8f2 75%, white)", "color-mix(in srgb, #f8f8f2 35%, white)"] },
+      "muted-ink": { "role": "neutral", "displayName": "Muted Ink", "tonalRamp": ["color-mix(in srgb, #c7c7bb 25%, black)", "color-mix(in srgb, #c7c7bb 40%, black)", "color-mix(in srgb, #c7c7bb 55%, black)", "color-mix(in srgb, #c7c7bb 70%, black)", "color-mix(in srgb, #c7c7bb 85%, black)", "#c7c7bb", "color-mix(in srgb, #c7c7bb 75%, white)", "color-mix(in srgb, #c7c7bb 35%, white)"] },
+      "selection-green": { "role": "primary", "displayName": "Selection Green", "tonalRamp": ["color-mix(in srgb, #a6e22e 25%, black)", "color-mix(in srgb, #a6e22e 40%, black)", "color-mix(in srgb, #a6e22e 55%, black)", "color-mix(in srgb, #a6e22e 70%, black)", "color-mix(in srgb, #a6e22e 85%, black)", "#a6e22e", "color-mix(in srgb, #a6e22e 75%, white)", "color-mix(in srgb, #a6e22e 35%, white)"] },
+      "link-cyan": { "role": "primary", "displayName": "Link Cyan", "tonalRamp": ["color-mix(in srgb, #66d9ef 25%, black)", "color-mix(in srgb, #66d9ef 40%, black)", "color-mix(in srgb, #66d9ef 55%, black)", "color-mix(in srgb, #66d9ef 70%, black)", "color-mix(in srgb, #66d9ef 85%, black)", "#66d9ef", "color-mix(in srgb, #66d9ef 75%, white)", "color-mix(in srgb, #66d9ef 35%, white)"] },
+      "chrome": { "role": "neutral", "displayName": "Chrome", "tonalRamp": ["color-mix(in srgb, #3e3d32 25%, black)", "color-mix(in srgb, #3e3d32 40%, black)", "color-mix(in srgb, #3e3d32 55%, black)", "color-mix(in srgb, #3e3d32 70%, black)", "color-mix(in srgb, #3e3d32 85%, black)", "#3e3d32", "color-mix(in srgb, #3e3d32 75%, white)", "color-mix(in srgb, #3e3d32 35%, white)"] },
+      "error-pink": { "role": "secondary", "displayName": "Error Pink", "tonalRamp": ["color-mix(in srgb, #f92672 25%, black)", "color-mix(in srgb, #f92672 40%, black)", "color-mix(in srgb, #f92672 55%, black)", "color-mix(in srgb, #f92672 70%, black)", "color-mix(in srgb, #f92672 85%, black)", "#f92672", "color-mix(in srgb, #f92672 75%, white)", "color-mix(in srgb, #f92672 35%, white)"] },
+      "rule-olive": { "role": "neutral", "displayName": "Rule Olive", "tonalRamp": ["color-mix(in srgb, #75715e 25%, black)", "color-mix(in srgb, #75715e 40%, black)", "color-mix(in srgb, #75715e 55%, black)", "color-mix(in srgb, #75715e 70%, black)", "color-mix(in srgb, #75715e 85%, black)", "#75715e", "color-mix(in srgb, #75715e 75%, white)", "color-mix(in srgb, #75715e 35%, white)"] },
+      "weekend": { "role": "neutral", "displayName": "Weekend", "tonalRamp": ["color-mix(in srgb, #30312b 25%, black)", "color-mix(in srgb, #30312b 40%, black)", "color-mix(in srgb, #30312b 55%, black)", "color-mix(in srgb, #30312b 70%, black)", "color-mix(in srgb, #30312b 85%, black)", "#30312b", "color-mix(in srgb, #30312b 75%, white)", "color-mix(in srgb, #30312b 35%, white)"] },
+      "inverse-yellow": { "role": "secondary", "displayName": "Inverse Yellow", "tonalRamp": ["color-mix(in srgb, #e6db74 25%, black)", "color-mix(in srgb, #e6db74 40%, black)", "color-mix(in srgb, #e6db74 55%, black)", "color-mix(in srgb, #e6db74 70%, black)", "color-mix(in srgb, #e6db74 85%, black)", "#e6db74", "color-mix(in srgb, #e6db74 75%, white)", "color-mix(in srgb, #e6db74 35%, white)"] },
+      "provider-violet": { "role": "secondary", "displayName": "Provider Violet", "tonalRamp": ["color-mix(in srgb, #ae81ff 25%, black)", "color-mix(in srgb, #ae81ff 40%, black)", "color-mix(in srgb, #ae81ff 55%, black)", "color-mix(in srgb, #ae81ff 70%, black)", "color-mix(in srgb, #ae81ff 85%, black)", "#ae81ff", "color-mix(in srgb, #ae81ff 75%, white)", "color-mix(in srgb, #ae81ff 35%, white)"] },
+      "provider-orange": { "role": "secondary", "displayName": "Provider Orange", "tonalRamp": ["color-mix(in srgb, #fd971f 25%, black)", "color-mix(in srgb, #fd971f 40%, black)", "color-mix(in srgb, #fd971f 55%, black)", "color-mix(in srgb, #fd971f 70%, black)", "color-mix(in srgb, #fd971f 85%, black)", "#fd971f", "color-mix(in srgb, #fd971f 75%, white)", "color-mix(in srgb, #fd971f 35%, white)"] },
+      "pure-white": { "role": "neutral", "displayName": "Pure White", "tonalRamp": ["#262626", "#595959", "#8c8c8c", "#b3b3b3", "#d9d9d9", "#f2f2f2", "#fafafa", "#ffffff"] },
+      "pure-black": { "role": "neutral", "displayName": "Pure Black", "tonalRamp": ["#000000", "#1f1f1f", "#404040", "#666666", "#8c8c8c", "#b3b3b3", "#d9d9d9", "#f2f2f2"] }
+    },
+    "typographyMeta": {
+      "title": { "displayName": "Product Title", "purpose": "Uberview in the sticky workspace strip." },
+      "ticket-title": { "displayName": "Ticket Title", "purpose": "Human-readable ticket and Gantt task titles." },
+      "body": { "displayName": "Body", "purpose": "Base interface text when an operational role is not required." },
+      "operational": { "displayName": "Operational", "purpose": "Controls, metadata, dates, references, status, and keyboard guidance." },
+      "label": { "displayName": "Label", "purpose": "Uppercase section titlebars and table headers." }
+    },
+    "shadows": [
+      { "name": "ticket-selection-edges", "value": "inset 0 2px #a6e22e, inset 0 -2px #a6e22e", "purpose": "Completes the green keyboard selection rectangle without changing row geometry." },
+      { "name": "today-rule", "value": "inset 2px 0 #f8f8f2", "purpose": "Marks today's Gantt column without elevating it." }
+    ],
+    "motion": [
+      { "name": "progress-spin", "value": "spin 1s linear infinite", "purpose": "The only shipped continuous motion, shown with Building Gantt... during the first uncached Gantt build." }
+    ],
+    "breakpoints": [
+      { "name": "half-screen", "value": "900px", "purpose": "Reflows the header hints and Providers while preserving desktop-density work areas." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Workspace Tabs",
+      "kind": "nav",
+      "refersTo": "workspace-tab",
+      "description": "Direct Tickets and Gantt navigation in the sticky workbench strip.",
+      "html": "<nav class=\"ds-workspace-tabs\" aria-label=\"Workspace view\"><button class=\"ds-workspace-tab ds-active\" aria-pressed=\"true\">Tickets</button><button class=\"ds-workspace-tab\" aria-pressed=\"false\">Gantt</button></nav>",
+      "css": ".ds-workspace-tabs { display: inline-flex; background: #3e3d32; border-left: 1px solid #f8f8f2; border-right: 1px solid #f8f8f2; } .ds-workspace-tab { min-height: 34px; padding: 0 .9rem; border: 0; border-left: 1px solid #f8f8f2; border-radius: 0; background: transparent; color: #f8f8f2; font: 400 .7rem/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .08em; text-transform: uppercase; } .ds-workspace-tab:first-child { border-left: 0; } .ds-workspace-tab:hover, .ds-workspace-tab:focus-visible, .ds-workspace-tab.ds-active { background: #a6e22e; color: #272822; font-weight: 800; outline: 2px solid #272822; outline-offset: -3px; }"
+    },
+    {
+      "name": "Outlined Action",
+      "kind": "button",
+      "refersTo": "action-button",
+      "description": "Compact provider and Gantt action control.",
+      "html": "<button class=\"ds-action\">Refresh</button>",
+      "css": ".ds-action { min-height: 28px; padding: .25rem .55rem; border: 1px solid #f8f8f2; border-radius: 0; background: #272822; color: #f8f8f2; font: 400 .7rem/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; text-transform: uppercase; } .ds-action:hover, .ds-action:focus-visible, .ds-action.ds-active { background: #e6db74; color: #272822; outline: 2px solid #f8f8f2; outline-offset: 2px; } .ds-action:disabled { background-image: repeating-linear-gradient(135deg, transparent 0 3px, #75715e 3px 4px); color: #c7c7bb; }"
+    },
+    {
+      "name": "Provider Row",
+      "kind": "custom",
+      "refersTo": "provider-row",
+      "description": "Dense provider identity, health, metadata, and actions.",
+      "html": "<div class=\"ds-provider\"><span class=\"ds-provider-mark\">GitLab / Core</span><span class=\"ds-provider-status\" aria-label=\"Online\"></span><span class=\"ds-provider-copy\"><strong>Online</strong><a href=\"#\">https://gitlab.example.test</a></span><button class=\"ds-provider-action\">Refresh</button></div>",
+      "css": ".ds-provider { display: grid; grid-template-columns: auto auto minmax(0,1fr) auto; align-items: center; gap: .6rem; padding: .55rem .7rem; border-bottom: 1px dotted #75715e; border-radius: 0; background: #272822; color: #f8f8f2; font: 400 .7rem/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; } .ds-provider-mark { padding: .16rem .25rem; border: 1px solid #66d9ef; color: #66d9ef; font-weight: 800; } .ds-provider-status { width: 9px; height: 9px; border: 1px solid #a6e22e; background: #a6e22e; } .ds-provider-copy { display: grid; } .ds-provider-copy a { color: #c7c7bb; text-decoration: underline dotted; text-underline-offset: 2px; } .ds-provider-action { min-height: 28px; padding: .25rem .55rem; border: 1px solid #f8f8f2; border-radius: 0; background: #272822; color: #f8f8f2; font: inherit; text-transform: uppercase; } .ds-provider-action:hover, .ds-provider-action:focus-visible { background: #e6db74; color: #272822; outline: 2px solid #f8f8f2; outline-offset: 2px; }"
+    },
+    {
+      "name": "Ticket Row",
+      "kind": "custom",
+      "refersTo": "ticket-row",
+      "description": "Keyboard-focusable ticket row with operational metadata and a readable title.",
+      "html": "<div class=\"ds-ticket\" tabindex=\"0\"><span>GitLab / Core</span><a href=\"#\">Prevent duplicate deployment jobs</a><span>High</span><span>2026-09-09</span></div>",
+      "css": ".ds-ticket { display: grid; grid-template-columns: 150px minmax(260px,1fr) 80px 100px; padding: .42rem .6rem; border-bottom: 1px dotted #75715e; border-radius: 0; background: #272822; color: #c7c7bb; font: 400 .7rem/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; } .ds-ticket a { color: #f8f8f2; font: 600 .8rem/1.35 Geneva, Tahoma, \"Helvetica Neue\", sans-serif; text-decoration: underline dotted; text-underline-offset: 2px; } .ds-ticket:hover { background: #3e3d32; color: #f8f8f2; } .ds-ticket:focus { background: #272822; color: #f8f8f2; outline: 2px solid #a6e22e; outline-offset: -2px; box-shadow: inset 0 2px #a6e22e, inset 0 -2px #a6e22e; }"
+    },
+    {
+      "name": "Ticket Label",
+      "kind": "chip",
+      "refersTo": "ticket-label",
+      "description": "Square dotted metadata tag below a ticket title.",
+      "html": "<span class=\"ds-ticket-label\">backend</span>",
+      "css": ".ds-ticket-label { display: inline-flex; padding: .08rem .28rem; border: 1px dotted currentColor; border-radius: 0; background: transparent; color: #f8f8f2; font: 400 .7rem/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }"
+    },
+    {
+      "name": "Provider Status",
+      "kind": "custom",
+      "description": "Distinct online, offline, and non-live cached status marks.",
+      "html": "<span class=\"ds-status-pair\"><span class=\"ds-status ds-online\" aria-hidden=\"true\"></span>Online</span><span class=\"ds-status-pair\"><span class=\"ds-status ds-offline\" aria-hidden=\"true\"></span>Offline</span><span class=\"ds-status-pair\"><span class=\"ds-status ds-cached\" aria-hidden=\"true\"></span>Cached</span>",
+      "css": ".ds-status-pair { display: inline-flex; align-items: center; gap: .35rem; margin: .25rem; color: #f8f8f2; font: 400 .7rem/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; } .ds-status { display: inline-block; width: 9px; height: 9px; border: 1px solid #f8f8f2; border-radius: 0; background: transparent; } .ds-status.ds-online { border-color: #a6e22e; background: #a6e22e; } .ds-status.ds-offline { border-color: #f92672; background: repeating-linear-gradient(45deg, transparent 0 2px, #f92672 2px 3px); } .ds-status.ds-cached { border-color: #e6db74; background: #e6db74; }"
+    },
+    {
+      "name": "Gantt Bar",
+      "kind": "custom",
+      "refersTo": "gantt-bar",
+      "description": "Rectangular provider-colored duration bar over one repeating row-grid node per ticket.",
+      "html": "<div class=\"ds-gantt-row\"><span class=\"ds-gantt-task\">[GitLab / Core] Prevent duplicate deployment jobs</span><span class=\"ds-gantt-grid\"><span class=\"ds-gantt-bar\">Prevent duplicate deployment jobs</span></span></div>",
+      "css": ".ds-gantt-row { display: grid; grid-template-columns: 520px minmax(360px,1fr); height: 36px; background: #272822; color: #f8f8f2; } .ds-gantt-task { padding: .3rem .75rem; overflow: hidden; border-bottom: 1px dotted #75715e; font: 400 .75rem/1.35 Geneva, Tahoma, \"Helvetica Neue\", sans-serif; text-decoration: underline dotted; text-overflow: ellipsis; white-space: nowrap; } .ds-gantt-grid { padding: 9px 2px; border-bottom: 1px dotted #75715e; background-image: linear-gradient(to right, transparent calc(100% - 1px), #75715e calc(100% - 1px)); background-size: 38px 100%; } .ds-gantt-bar { display: block; width: 70%; height: 18px; padding: 0 .45rem; overflow: hidden; border-radius: 0; background: #66d9ef; color: #000; font: 400 .7rem/18px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; text-overflow: ellipsis; white-space: nowrap; }"
+    },
+    {
+      "name": "Statusline",
+      "kind": "custom",
+      "description": "Persistent view and read-only context at the bottom of the frame.",
+      "html": "<footer class=\"ds-statusline\"><span><strong>Tickets</strong> Read-only overview</span></footer>",
+      "css": ".ds-statusline { display: flex; justify-content: space-between; align-items: center; min-height: 29px; padding: .3rem .65rem; border-top: 1px solid #f8f8f2; border-radius: 0; background: #272822; color: #f8f8f2; font: 400 .7rem/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .03em; } .ds-statusline strong { padding: .12rem .35rem; background: #a6e22e; color: #272822; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Monokai Workbench",
+    "overview": "Uberview is a compact desktop operating surface modeled on a precise editor workbench. Charcoal fields, syntax-bright state colors, square rules, dense monospace data, and a persistent statusline make provider health and ticket urgency legible without pretending to be a terminal. Restrained sans-serif ticket titles provide a deliberate reading contrast inside the operational grid.\n\nThe system is flat, direct, and keyboard-first. It names the product and primary destinations plainly as Uberview, Tickets, Gantt, and Providers. Decorative cards, soft dashboard chrome, and hidden interaction conventions are outside the shipped language.",
+    "keyCharacteristics": [
+      "Monokai charcoal surfaces with sparse syntax-bright signals.",
+      "Square geometry, solid structural rules, and dotted row separators.",
+      "Dense monospace controls and metadata paired with sans-serif ticket titles.",
+      "Green bordered keyboard selection and visible white control focus.",
+      "Desktop-only operation at full-screen and half-screen widths."
+    ],
+    "rules": [
+      { "name": "The Sparse Syntax Rule", "body": "Bright colors identify state, source, or keyboard position; they never become broad decorative fills.", "section": "colors" },
+      { "name": "The Dual-Cue Status Rule", "body": "Online uses a filled green square, offline uses a pink border and diagonal hatch, and Cached uses a yellow square; every mark is paired with visible status or error text. Cached means stored provider data and must not claim live online reachability.", "section": "colors" },
+      { "name": "The Data Is Mono Rule", "body": "Dates, statuses, priorities, references, provider metadata, controls, and keyboard guidance stay monospace; only human-readable ticket titles switch to sans serif.", "section": "typography" },
+      { "name": "The Direct Naming Rule", "body": "Visible navigation and section language uses Uberview, Tickets, Gantt, and Providers. Do not add ornamental subtitles or rename these destinations with abstract information-architecture jargon.", "section": "typography" },
+      { "name": "The Configured Name Rule", "body": "Provider identity always uses the configured provider `name` in Providers, Tickets, and Gantt. Never substitute generated enumeration such as P01 or P02.", "section": "typography" },
+      { "name": "The Workbench Frame Rule", "body": "Keep one bordered operating frame; do not fragment Tickets, Gantt, Providers, or status into floating dashboard cards.", "section": "layout" },
+      { "name": "The Preserve Density Rule", "body": "At half-screen width, reflow Providers and enable horizontal work areas rather than enlarging controls or converting table rows into mobile cards.", "section": "layout" },
+      { "name": "The Full-Width Gantt Rule", "body": "Expand the existing workbench frame to full viewport width for Gantt; do not place the timeline inside the centered 1500px Tickets cap.", "section": "layout" },
+      { "name": "The Flat Workbench Rule", "body": "Surfaces remain flush at rest; establish hierarchy with tone, rules, patterns, and sticky positioning rather than drop shadows.", "section": "elevation" },
+      { "name": "The Square Rule", "body": "Do not introduce rounded cards, pills, soft containers, or capsule Gantt bars. Zero radius is a system invariant.", "section": "shapes" }
+    ],
+    "dos": [
+      "**Do** preserve the single compact desktop workbench at full-screen and half-screen widths.",
+      "**Do** use exact Monokai roles and the six-color provider cycle from the normative tokens.",
+      "**Do** retain visible focus, green row selection, dotted links, and text or pattern cues alongside color.",
+      "**Do** keep keyboard behavior consistent: T for Tickets, G for Gantt, R to refresh visible providers, J/K or arrows to move, and Enter to open. In Gantt only, M/Q/Y select the time window and D jumps to today.",
+      "**Do** keep operational data dense and monospace while setting ticket titles in the restrained sans face.",
+      "**Do** use the configured provider name consistently in Providers, Tickets, and Gantt.",
+      "**Do** preserve the full-width Gantt frame, optimized row-grid/day-band structure, and 15-second rendered-view cache."
+    ],
+    "donts": [
+      "**Don't** add rounded dashboard cards, pills, gradients, glass effects, ambient shadows, or spacious marketing-style sections.",
+      "**Don't** turn half-screen behavior into a mobile card layout; mobile-specific design is out of scope.",
+      "**Don't** use provider identity colors as health indicators or rely on color alone for status, errors, or focus.",
+      "**Don't** replace Uberview, Tickets, Gantt, or Providers with clever labels, subtitles, or abstract jargon.",
+      "**Don't** treat files under `.impeccable/review/` as shipping assets; the shipped frontend contains no raster product assets.",
+      "**Don't** generate P01/P02-style provider identities or describe Cached data as live Online data.",
+      "**Don't** render Gantt as one DOM cell per ticket per day; use one row-grid node per ticket plus shared day bands."
+    ]
+  }
+}

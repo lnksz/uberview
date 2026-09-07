@@ -1,6 +1,6 @@
 # Uberview
 
-A lightweight dashboard that aggregates open issues assigned to you from multiple task providers 
+A lightweight dashboard that aggregates open issues assigned to you from multiple task providers
 (GitLab, Jira Cloud, Jira Server) into a single view.
 
 This is a read-only dashboard, not trying to replace the native interfaces of the providers,
@@ -14,7 +14,7 @@ but help keep me sane with keeping the overview (GER = "Überblick") of my tasks
 - Single binary, no dependencies
 - Supports GitLab, Jira Cloud, and Jira Server
 - Shows GitLab configurable work item statuses when available
-- Auto light/dark theme based on system preference
+- Desktop Monokai interface with Tickets and Gantt views
 - Per-provider refresh buttons
 - Real-time provider status indicators
 - 15-second SQLite issue cache in `sqlite.db`

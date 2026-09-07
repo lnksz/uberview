@@ -6,49 +6,6 @@
         <link rel="icon" type="image/x-icon" href="/favicon.ico">
         <title>Uberview - Task Overview</title>
         <style>
-        :root {
-            /* Dark theme (default) */
-            --bg-color: #1a1a2e;
-            --card-bg: #16213e;
-            --text-color: #eee;
-            --text-muted: #aaa;
-            --accent: #0f3460;
-            --clickable: #2563eb;
-            --header-bg: #0f346085;
-            --success: #4ade80;
-            --error: #f87171;
-            --border: #2a2a4a;
-            --hover-bg: rgba(255, 255, 255, 0.02);
-            --gantt-weekend-bg: #1d2742;
-
-            /* Provider color palette (deterministic) */
-            --provider-color-0: #3b82f6;
-            --provider-color-1: #8b5cf6;
-            --provider-color-2: #06b6d4;
-            --provider-color-3: #f59e0b;
-            --provider-color-4: #10b981;
-            --provider-color-5: #ec4899;
-            --provider-color-6: #6366f1;
-            --provider-color-7: #14b8a6;
-        }
-
-        @media (prefers-color-scheme: light) {
-            :root {
-                --bg-color: #f5f5f5;
-                --card-bg: #ffffff;
-                --text-color: #1a1a2e;
-                --text-muted: #666;
-                --accent: #e0e7ff;
-                --clickable: #2563eb;
-                --header-bg: #e0e7ff85;
-                --success: #22c55e;
-                --error: #dc2626;
-                --border: #e0e0e0;
-                --hover-bg: rgba(0, 0, 0, 0.02);
-                --gantt-weekend-bg: #f1f1f5;
-            }
-        }
-
         * {
             box-sizing: border-box;
             margin: 0;
@@ -56,7 +13,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+            font-family: Geneva, Tahoma, "Helvetica Neue", sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             line-height: 1.6;
@@ -213,10 +170,6 @@
 
         .status-indicator.offline {
             background-color: var(--error);
-        }
-
-        .status-indicator.cached {
-            background-color: #f59e0b;
         }
 
         .provider-info {
@@ -655,44 +608,682 @@
             z-index: 1;
         }
 
-        @media (max-width: 640px) {
-            body {
-                padding: 0.75rem;
+        /* Monokai workbench */
+        :root {
+            color-scheme: dark;
+            --bg-color: #1e1f1c;
+            --card-bg: #272822;
+            --text-color: #f8f8f2;
+            --text-muted: #c7c7bb;
+            --accent: #a6e22e;
+            --clickable: #66d9ef;
+            --header-bg: #3e3d32;
+            --success: #a6e22e;
+            --error: #f92672;
+            --border: #75715e;
+            --hover-bg: #3e3d32;
+            --gantt-weekend-bg: #30312b;
+            --desktop-pattern: #3e3d32;
+            --inverse-bg: #e6db74;
+            --inverse-text: #272822;
+        }
+
+        * {
+            border-radius: 0 !important;
+        }
+
+        html {
+            min-height: 100%;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: radial-gradient(var(--desktop-pattern) 0.7px, transparent 0.7px);
+            background-size: 4px 4px;
+            font-family: Geneva, Tahoma, "Helvetica Neue", sans-serif;
+            font-size: 14px;
+            line-height: 1.35;
+            min-height: 100vh;
+            padding: 0;
+        }
+
+        ::selection {
+            background: var(--inverse-bg);
+            color: var(--inverse-text);
+        }
+
+        * {
+            scrollbar-color: var(--text-color) var(--card-bg);
+            scrollbar-width: thin;
+        }
+
+        button,
+        a {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button:focus-visible,
+        a:focus-visible,
+        [tabindex="0"]:focus-visible {
+            outline: 2px solid var(--text-color);
+            outline-offset: 2px;
+        }
+
+        .header {
+            align-items: stretch;
+            background: var(--header-bg);
+            color: var(--text-color);
+            display: grid;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            grid-template-columns: minmax(190px, auto) auto 1fr;
+            margin: 0;
+            min-height: 34px;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+
+        .header h1 {
+            align-items: center;
+            display: flex;
+            font-size: 0.82rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            padding: 0 0.85rem;
+            text-transform: uppercase;
+        }
+
+        .view-switch {
+            align-items: stretch;
+            border-left: 1px solid currentColor;
+            border-right: 1px solid currentColor;
+            display: flex;
+            gap: 0;
+        }
+
+        .view-switch button {
+            background: transparent;
+            border: 0;
+            color: var(--text-color);
+            font-family: inherit;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            min-height: 34px;
+            padding: 0 0.9rem;
+            text-transform: uppercase;
+        }
+
+        .view-switch button + button {
+            border-left: 1px solid currentColor;
+        }
+
+        .view-switch button.inactive {
+            color: var(--text-color);
+            font-weight: 400;
+            opacity: 0.62;
+        }
+
+        .view-switch button:hover,
+        .view-switch button:focus-visible,
+        .view-switch button[aria-pressed="true"] {
+            background: var(--accent);
+            color: var(--inverse-text);
+            opacity: 1;
+            outline-color: var(--card-bg);
+            outline-offset: -3px;
+        }
+
+        .shortcut-strip {
+            align-items: center;
+            display: flex;
+            font-size: 0.7rem;
+            gap: 0.9rem;
+            justify-content: flex-end;
+            letter-spacing: 0.03em;
+            overflow: hidden;
+            padding-bottom: 0.5rem;
+            padding-left: 0.85rem;
+            padding-right: 0.85rem;
+            padding-top: 0.5rem;
+            white-space: nowrap;
+        }
+
+        kbd {
+            border: 1px solid currentColor;
+            font: inherit;
+            font-weight: 800;
+            padding: 0.05rem 0.25rem;
+        }
+
+        main {
+            background: var(--card-bg);
+            border: 1px solid var(--text-color);
+            color: var(--text-color);
+            margin: clamp(12px, 3vw, 42px) auto;
+            max-width: min(1500px, calc(100vw - 32px));
+        }
+
+        main.gantt-active {
+            margin-left: 0;
+            margin-right: 0;
+            max-width: 100vw;
+            width: 100%;
+        }
+
+        .loading .spinner {
+            border-radius: 50% !important;
+        }
+
+        .panel-titlebar {
+            align-items: center;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--text-color);
+            display: flex;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            justify-content: space-between;
+            min-height: 30px;
+            padding: 0.3rem 0.7rem;
+        }
+
+        .panel-titlebar h2,
+        .panel-titlebar h3 {
+            font-family: inherit;
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .panel-meta {
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .stack-index {
+            border-bottom: 1px solid var(--text-color);
+        }
+
+        .providers-grid {
+            display: grid;
+            gap: 0;
+            grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+            margin: 0;
+        }
+
+        .provider-card {
+            align-items: center;
+            background: var(--card-bg);
+            border: 0;
+            border-bottom: 1px dotted var(--border);
+            border-left: 0 !important;
+            display: grid;
+            gap: 0.6rem;
+            grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+            min-width: 0;
+            padding: 0.55rem 0.7rem;
+        }
+
+        .provider-card:nth-child(odd) {
+            background-image: radial-gradient(var(--border) 0.45px, transparent 0.45px);
+            background-size: 4px 4px;
+        }
+
+        .provider-card.is-hidden {
+            opacity: 0.58;
+        }
+
+        .provider-mark {
+            border: 1px solid var(--text-color);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.7rem;
+            font-weight: 800;
+            min-width: 2.35rem;
+            padding: 0.16rem 0.25rem;
+            text-align: center;
+        }
+
+        .status-indicator {
+            background: transparent;
+            border: 1px solid var(--text-color);
+            height: 9px;
+            width: 9px;
+        }
+
+        .status-indicator.online {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .status-indicator.offline {
+            background: repeating-linear-gradient(45deg, transparent 0 2px, var(--error) 2px 3px);
+            border-color: var(--error);
+        }
+
+        .status-indicator.cached {
+            background: var(--inverse-bg);
+            border-color: var(--inverse-bg);
+        }
+
+        .provider-name {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.76rem;
+            gap: 0.4rem;
+            letter-spacing: 0.02em;
+        }
+
+        .provider-url {
+            font-size: 0.7rem;
+            margin-top: 0.08rem;
+        }
+
+        .provider-url a {
+            text-decoration: underline;
+            text-decoration-style: dotted;
+            text-underline-offset: 2px;
+        }
+
+        .provider-type,
+        .provider-status {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.7rem;
+        }
+
+        .task-count {
+            background: var(--inverse-bg);
+            color: var(--inverse-text);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.7rem;
+            padding: 0.08rem 0.3rem;
+        }
+
+        .provider-refresh-btn,
+        .provider-visibility-btn,
+        .gantt-toolbar button {
+            background: var(--card-bg);
+            border: 1px solid var(--text-color);
+            color: var(--text-color);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.7rem;
+            min-height: 28px;
+            min-width: 0;
+            padding: 0.25rem 0.55rem;
+            text-transform: uppercase;
+            transition: none;
+        }
+
+        .provider-refresh-btn:hover,
+        .provider-refresh-btn:focus-visible,
+        .provider-visibility-btn:hover,
+        .provider-visibility-btn:focus-visible,
+        .gantt-toolbar button:hover,
+        .gantt-toolbar button:focus-visible,
+        .gantt-toolbar button.active {
+            background: var(--inverse-bg);
+            border-color: var(--text-color);
+            color: var(--inverse-text);
+            opacity: 1;
+        }
+
+        .provider-refresh-btn:disabled {
+            background-image: repeating-linear-gradient(135deg, transparent 0 3px, var(--border) 3px 4px);
+            color: var(--text-muted);
+            opacity: 1;
+        }
+
+        .provider-error {
+            border-top: 1px dotted var(--text-color);
+            color: var(--error);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.7rem;
+            margin-top: 0.35rem;
+            padding-top: 0.3rem;
+        }
+
+        .issues-container {
+            background: var(--card-bg);
+            border: 0;
+            overflow: hidden;
+        }
+
+        .issues-header {
+            background: var(--header-bg);
+            border-bottom: 1px solid var(--text-color);
+            color: var(--text-color);
+            min-height: 32px;
+            padding: 0.35rem 0.7rem;
+        }
+
+        .issues-header h2 {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.73rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .issues-count {
+            color: inherit;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.7rem;
+        }
+
+        #issues-content {
+            overflow: auto;
+        }
+
+        .table-scroll {
+            overflow: auto;
+        }
+
+        table {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            min-width: 980px;
+        }
+
+        th,
+        td {
+            border-bottom: 1px dotted var(--border);
+            padding: 0.42rem 0.6rem;
+            vertical-align: top;
+        }
+
+        th {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--text-color);
+            font-size: 0.7rem;
+            letter-spacing: 0.06em;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        tbody tr {
+            border-left: 0 !important;
+        }
+
+        tbody tr:hover td {
+            background: var(--hover-bg);
+            color: var(--text-color);
+        }
+
+        tbody tr:focus td,
+        tbody tr:focus-within td {
+            background: var(--card-bg);
+            color: var(--text-color);
+        }
+
+        tbody tr:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: -2px;
+        }
+
+        tbody tr:focus td {
+            box-shadow: inset 0 2px var(--accent), inset 0 -2px var(--accent);
+        }
+
+        tbody tr:focus td:first-child {
+            box-shadow: inset 2px 0 var(--accent), inset 0 2px var(--accent), inset 0 -2px var(--accent);
+        }
+
+        tbody tr:focus td:last-child {
+            box-shadow: inset -2px 0 var(--accent), inset 0 2px var(--accent), inset 0 -2px var(--accent);
+        }
+
+        tbody tr:focus a,
+        tbody tr:focus-within a,
+        tbody tr:hover a {
+            color: inherit;
+        }
+
+        .issue-title a,
+        .issue-ref a {
+            text-decoration: underline;
+            text-decoration-style: dotted;
+            text-underline-offset: 2px;
+        }
+
+        .issue-title {
+            font-family: Geneva, Tahoma, "Helvetica Neue", sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            min-width: 280px;
+        }
+
+        .issue-source,
+        .issue-ref,
+        .date-cell,
+        .issue-status,
+        .issue-priority {
+            color: var(--text-muted);
+            font-size: 0.7rem;
+        }
+
+        tbody tr:hover .issue-source,
+        tbody tr:hover .issue-ref,
+        tbody tr:hover .date-cell,
+        tbody tr:hover .issue-status,
+        tbody tr:hover .issue-priority,
+        tbody tr:focus .issue-source,
+        tbody tr:focus .issue-ref,
+        tbody tr:focus .date-cell,
+        tbody tr:focus .issue-status,
+        tbody tr:focus .issue-priority {
+            color: var(--text-color);
+        }
+
+        .label-chip {
+            background: transparent;
+            border: 1px dotted currentColor;
+            color: inherit;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.7rem;
+            padding: 0.08rem 0.28rem;
+        }
+
+        .empty-state {
+            align-items: center;
+            background-image: radial-gradient(var(--border) 0.45px, transparent 0.45px);
+            background-size: 4px 4px;
+            color: var(--text-color);
+            display: flex;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            justify-content: center;
+            min-height: 260px;
+            padding: 3rem 1rem;
+        }
+
+        .empty-state::before {
+            content: "NO TICKET DATA";
+            background: var(--card-bg);
+            border: 1px solid var(--text-color);
+            font-size: 0.7rem;
+            font-weight: 800;
+            margin-right: 0.8rem;
+            padding: 0.25rem 0.45rem;
+        }
+
+        .gantt-toolbar {
+            border-bottom: 1px solid var(--text-color);
+            gap: 0.35rem;
+            padding: 0.4rem 0.55rem;
+        }
+
+        .gantt-period-label {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.7rem;
+        }
+
+        .gantt-toolbar u {
+            text-decoration-thickness: 2px;
+            text-underline-offset: 2px;
+        }
+
+        .gantt-scroll {
+            max-height: calc(100vh - 260px);
+        }
+
+        .gantt-task-header,
+        .gantt-month-header,
+        .gantt-day-header {
+            border-bottom: 1px solid var(--text-color);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.7rem;
+        }
+
+        .gantt-day,
+        .gantt-task {
+            border-bottom: 1px dotted var(--border);
+        }
+
+        .gantt-day {
+            border-left: 1px dotted var(--border);
+        }
+
+        .gantt-day.today {
+            box-shadow: inset 2px 0 var(--text-color);
+        }
+
+        .gantt-row-grid {
+            background-image: linear-gradient(to right, transparent calc(100% - 1px), var(--border) calc(100% - 1px));
+            background-size: calc(100% / var(--gantt-day-count)) 100%;
+            border-bottom: 1px dotted var(--border);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .gantt-day-band {
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .gantt-day-band.weekend {
+            background: var(--gantt-weekend-bg);
+        }
+
+        .gantt-day-band.month-start {
+            border-left: 2px solid var(--border);
+        }
+
+        .gantt-day-band.today {
+            box-shadow: inset 2px 0 var(--text-color);
+        }
+
+        .gantt-task {
+            border-left: 0 !important;
+        }
+
+        .gantt-task a {
+            font-family: Geneva, Tahoma, "Helvetica Neue", sans-serif;
+            font-size: 0.75rem;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+            text-underline-offset: 2px;
+        }
+
+        .gantt-task:focus {
+            background: var(--hover-bg);
+            color: var(--text-color);
+            outline: 2px solid var(--accent);
+            outline-offset: -2px;
+        }
+
+        .gantt-task:focus a {
+            color: inherit;
+        }
+
+        .gantt-bar {
+            background: var(--provider-color) !important;
+            box-shadow: none;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            height: 18px;
+            line-height: 18px;
+        }
+
+        .statusline {
+            align-items: center;
+            background: var(--card-bg);
+            border-top: 1px solid var(--text-color);
+            display: flex;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.7rem;
+            justify-content: space-between;
+            letter-spacing: 0.03em;
+            min-height: 29px;
+            padding: 0.3rem 0.65rem;
+        }
+
+        .statusline strong {
+            background: var(--accent);
+            color: var(--inverse-text);
+            padding: 0.12rem 0.35rem;
+        }
+
+        @media (max-width: 900px) {
+            .header {
+                grid-template-columns: 1fr auto;
             }
 
-            .gantt-toolbar {
-                padding: 0.5rem 0.75rem;
+            .header h1 {
+                min-height: 34px;
             }
 
-            .gantt-period-label {
-                flex-basis: 100%;
-                margin-left: 0;
+            .shortcut-strip {
+                border-top: 1px solid currentColor;
+                grid-column: 1 / -1;
+                justify-content: flex-start;
+                overflow-x: auto;
             }
 
-            .gantt-scroll {
-                max-height: calc(100vh - 18rem);
+            main {
+                margin: 10px auto;
+                max-width: calc(100vw - 20px);
+            }
+
+            .providers-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
     <header class="header">
-        <h1 class="view-switch"><button type="button" id="table-view-btn" aria-pressed="true" onclick="setView('table')">Uberview</button><span class="view-separator">|</span><button type="button" id="gantt-view-btn" class="inactive" aria-pressed="false" onclick="setView('gantt')">Gantt</button></h1>
+        <h1>Uberview</h1>
+        <nav class="view-switch" aria-label="Workspace view">
+            <button type="button" id="table-view-btn" aria-pressed="true" onclick="setView('table')">Tickets</button>
+            <button type="button" id="gantt-view-btn" class="inactive" aria-pressed="false" onclick="setView('gantt')">Gantt</button>
+        </nav>
+        <div class="shortcut-strip" aria-hidden="true">
+            <span><kbd>T</kbd> Tickets</span>
+            <span><kbd>G</kbd> Gantt</span>
+            <span><kbd>R</kbd> Refresh</span>
+            <span><kbd>J/K</kbd> Move</span>
+            <span><kbd>Enter</kbd> Open</span>
+        </div>
     </header>
 
     <main>
-        <div class="providers-grid" id="providers-grid">
-            <div class="provider-card">
-                <div class="status-indicator" aria-hidden="true"></div>
-                <div class="provider-info">
-                    <div class="provider-name">Loading providers...</div>
+        <section class="stack-index" aria-labelledby="providers-title">
+            <div class="panel-titlebar">
+                <h2 id="providers-title">Providers</h2>
+                <span class="panel-meta" id="provider-summary">Checking providers...</span>
+            </div>
+            <div class="providers-grid" id="providers-grid">
+                <div class="provider-card">
+                    <span class="provider-mark" aria-hidden="true">Loading</span>
+                    <div class="status-indicator" aria-hidden="true"></div>
+                    <div class="provider-info">
+                        <div class="provider-name">Loading providers...</div>
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div class="issues-container">
+        <section class="issues-container" aria-labelledby="issues-title">
             <div class="issues-header">
-                <h2>Open Issues</h2>
+                <h2 id="issues-title">Open tickets</h2>
                 <span class="issues-count" id="issues-count"></span>
             </div>
             <div id="issues-content">
@@ -700,26 +1291,29 @@
                     Click "Refresh" on a provider to load issues
                 </div>
             </div>
-        </div>
+            <footer class="statusline">
+                <span><strong id="active-view-label">Tickets</strong> Read-only overview</span>
+            </footer>
+        </section>
     </main>
 
     <script>
         // Provider color palette (deterministic, matches CSS variables)
         const providerColors = [
-            '#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b',
-            '#10b981', '#ec4899', '#6366f1', '#14b8a6'
+            '#66d9ef', '#ae81ff', '#fd971f', '#a6e22e',
+            '#f92672', '#e6db74'
         ];
 
         // Map provider names to color indices
-        let providerColorMap = {};
+        let providerColorMap = new Map();
         let nextColorIndex = 0;
 
         function getProviderColor(providerName) {
-            if (!(providerName in providerColorMap)) {
-                providerColorMap[providerName] = nextColorIndex;
+            if (!providerColorMap.has(providerName)) {
+                providerColorMap.set(providerName, nextColorIndex);
                 nextColorIndex = (nextColorIndex + 1) % providerColors.length;
             }
-            return providerColors[providerColorMap[providerName]];
+            return providerColors[providerColorMap.get(providerName)];
         }
 
         function getReadableTextColor(hexColor) {
@@ -756,6 +1350,10 @@
             });
 
             const issuesContent = document.getElementById('issues-content');
+            issuesContent.addEventListener('focusin', event => {
+                const row = event.target.closest('[data-issue-row]');
+                if (row) activeIssueUrl = row.dataset.issueUrl;
+            });
             issuesContent.addEventListener('pointerdown', event => {
                 const handle = event.target.closest('.gantt-resize-handle');
                 if (handle) startTaskColumnResize(event, handle);
@@ -763,8 +1361,74 @@
             issuesContent.addEventListener('keydown', event => {
                 if (event.target.classList.contains('gantt-resize-handle')) {
                     resizeTaskColumnFromKeyboard(event);
+                    return;
                 }
+
+                const row = event.target.closest('[data-issue-row]');
+                if (!row || event.target.closest('a, button')) return;
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    row.querySelector('a')?.click();
+                    return;
+                }
+
+                const direction = ['ArrowDown', 'j', 'J'].includes(event.key) ? 1
+                    : (['ArrowUp', 'k', 'K'].includes(event.key) ? -1 : 0);
+                if (!direction) return;
+                event.preventDefault();
+                const rows = [...issuesContent.querySelectorAll('[data-issue-row]')];
+                const nextRow = rows[Math.min(rows.length - 1, Math.max(0, rows.indexOf(row) + direction))];
+                nextRow?.focus();
             });
+
+            document.addEventListener('keydown', handleWorkspaceShortcut);
+        }
+
+        function handleWorkspaceShortcut(event) {
+            if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
+
+            const ganttShortcut = activeView === 'gantt' ? event.key.toLowerCase() : '';
+            if (!event.target.closest('input, select, textarea, [contenteditable="true"]')) {
+                const zoom = { m: 'month', q: 'quarter', y: 'year' }[ganttShortcut];
+                if (zoom) {
+                    setGanttZoom(zoom);
+                    event.preventDefault();
+                    return;
+                }
+                if (ganttShortcut === 'd') {
+                    showTodayGantt();
+                    event.preventDefault();
+                    return;
+                }
+            }
+
+            if (event.target.closest('button, a, input, select, textarea, [contenteditable="true"]')) return;
+            if (event.key === 't' || event.key === 'T') {
+                setView('table');
+            } else if (event.key === 'g' || event.key === 'G') {
+                setView('gantt');
+            } else if (event.key === 'r' || event.key === 'R') {
+                document.querySelectorAll('.provider-card:not(.is-hidden) [data-provider-action="refresh"]')
+                    .forEach(button => button.click());
+            } else if (['ArrowDown', 'j', 'J', 'ArrowUp', 'k', 'K'].includes(event.key)) {
+                const rows = [...document.querySelectorAll('[data-issue-row]')];
+                if (rows.length === 0) return;
+                const direction = ['ArrowDown', 'j', 'J'].includes(event.key) ? 1 : -1;
+                const currentIndex = rows.indexOf(document.activeElement.closest?.('[data-issue-row]'));
+                const nextIndex = currentIndex < 0
+                    ? (direction > 0 ? 0 : rows.length - 1)
+                    : Math.min(rows.length - 1, Math.max(0, currentIndex + direction));
+                rows[nextIndex].focus();
+            } else {
+                return;
+            }
+            event.preventDefault();
+        }
+
+        function updateProviderSummary(statuses) {
+            const onlineCount = statuses.filter(status => status.online).length;
+            const noun = statuses.length === 1 ? 'provider' : 'providers';
+            document.getElementById('provider-summary').textContent = `${statuses.length} ${noun} / ${onlineCount} online`;
         }
 
         async function checkStatus() {
@@ -776,16 +1440,19 @@
                 const statuses = await response.json();
 
                 if (!Array.isArray(statuses) || statuses.length === 0) {
-                    grid.innerHTML = '<div class="provider-card"><div class="provider-info"><div class="provider-name">No providers configured</div></div></div>';
+                    document.getElementById('provider-summary').textContent = '0 providers';
+                    grid.innerHTML = '<div class="provider-card"><span class="provider-mark" aria-hidden="true">None</span><div class="status-indicator" aria-hidden="true"></div><div class="provider-info"><div class="provider-name">No providers configured</div></div></div>';
                     return;
                 }
 
                 // Pre-assign colors in order
                 statuses.forEach(status => getProviderColor(status.name));
 
+                updateProviderSummary(statuses);
                 grid.innerHTML = statuses.map(status => renderProviderCard(status)).join('');
             } catch (error) {
-                grid.innerHTML = '<div class="provider-card"><div class="status-indicator offline" aria-hidden="true"></div><div class="provider-info"><div class="provider-name">Failed to load providers</div><div class="provider-error" role="alert">Check the server connection, then reload this page.</div></div></div>';
+                document.getElementById('provider-summary').textContent = 'Providers unavailable';
+                grid.innerHTML = '<div class="provider-card"><span class="provider-mark" aria-hidden="true">Error</span><div class="status-indicator offline" aria-hidden="true"></div><div class="provider-info"><div class="provider-name">Failed to load providers</div><div class="provider-error" role="alert">Check the server connection, then reload this page.</div></div></div>';
             }
         }
 
@@ -799,10 +1466,10 @@
 
             return `
                 <div class="provider-card ${hidden ? 'is-hidden' : ''}" data-provider="${escapeAttribute(status.name)}" style="border-left-color: ${color};">
+                    <span class="provider-mark" style="border-color: ${color}; color: ${color};">${escapeHtml(status.name)}</span>
                     <div class="status-indicator ${statusClass}" aria-hidden="true"></div>
                     <div class="provider-info">
                         <div class="provider-name">
-                            ${escapeHtml(status.name)}
                             ${countBadge}
                             <span class="provider-status" role="status">${statusLabel}</span>
                         </div>
@@ -823,7 +1490,7 @@
         }
 
         // Store issues by provider for aggregation
-        let issuesByProvider = {};
+        let issuesByProvider = new Map();
 
         // Sort state (UI). Default is Due ascending.
         // If the user turns sorting "off", we still apply the default ordering (due ASC).
@@ -837,6 +1504,11 @@
         let hiddenProviders = getStoredHiddenProviders();
         let ganttTaskWidth = getStoredTaskWidth();
         let ganttScrollDate = null;
+        let activeIssueUrl = null;
+        let renderRevision = 0;
+        let viewRenderRequest = 0;
+        const renderedViewCache = new Map();
+        const renderedViewCacheTTL = 15000;
 
         function getStoredPreference(key, allowedValues, defaultValue) {
             try {
@@ -874,10 +1546,12 @@
 
         function getStoredTaskWidth() {
             try {
-                const width = Number(localStorage.getItem(ganttTaskWidthPreferenceKey));
-                return Number.isFinite(width) ? Math.min(600, Math.max(180, width)) : 260;
+                const storedWidth = localStorage.getItem(ganttTaskWidthPreferenceKey);
+                if (storedWidth === null) return 520;
+                const width = Number(storedWidth);
+                return Number.isFinite(width) ? Math.min(900, Math.max(360, width)) : 520;
             } catch {
-                return 260;
+                return 520;
             }
         }
 
@@ -891,7 +1565,7 @@
             grid.classList.add('is-resizing');
 
             function resize(moveEvent) {
-                ganttTaskWidth = Math.min(600, Math.max(180, initialWidth + moveEvent.clientX - startX));
+                ganttTaskWidth = Math.min(900, Math.max(360, initialWidth + moveEvent.clientX - startX));
                 grid.style.setProperty('--gantt-task-width', `${ganttTaskWidth}px`);
                 handle.setAttribute('aria-valuenow', Math.round(ganttTaskWidth));
             }
@@ -899,6 +1573,7 @@
             function stop() {
                 grid.classList.remove('is-resizing');
                 storePreference(ganttTaskWidthPreferenceKey, ganttTaskWidth);
+                invalidateRenderedViews();
                 handle.removeEventListener('pointermove', resize);
                 handle.removeEventListener('pointerup', stop);
                 handle.removeEventListener('pointercancel', stop);
@@ -913,16 +1588,17 @@
             const widths = {
                 ArrowLeft: ganttTaskWidth - 10,
                 ArrowRight: ganttTaskWidth + 10,
-                Home: 180,
-                End: 600
+                Home: 360,
+                End: 900
             };
             if (!(event.key in widths)) return;
 
             event.preventDefault();
-            ganttTaskWidth = Math.min(600, Math.max(180, widths[event.key]));
+            ganttTaskWidth = Math.min(900, Math.max(360, widths[event.key]));
             event.target.closest('.gantt-grid').style.setProperty('--gantt-task-width', `${ganttTaskWidth}px`);
             event.target.setAttribute('aria-valuenow', Math.round(ganttTaskWidth));
             storePreference(ganttTaskWidthPreferenceKey, ganttTaskWidth);
+            invalidateRenderedViews();
         }
 
         function toggleProviderVisibility(providerName) {
@@ -932,6 +1608,7 @@
                 hiddenProviders.add(providerName);
             }
             storeHiddenProviders();
+            invalidateRenderedViews();
 
             const card = Array.from(document.querySelectorAll('.provider-card'))
                 .find(element => element.dataset.provider === providerName);
@@ -972,13 +1649,39 @@
                 }
             }
             renderAllIssues();
+            document.querySelector(`thead [data-sort-key="${key}"]`)?.focus();
         }
 
         function setView(view) {
+            const focusedIssueUrl = document.activeElement.closest?.('[data-issue-row]')?.dataset.issueUrl || activeIssueUrl;
+            if (activeView === 'gantt') ganttScrollDate = captureGanttScrollDate();
             activeView = view;
             storePreference(viewPreferenceKey, view);
             applyViewButtonState();
-            renderAllIssues();
+            const request = ++viewRenderRequest;
+            const completeRender = () => {
+                if (request !== viewRenderRequest || activeView !== view) return;
+                renderAllIssues();
+                restoreIssueFocus(focusedIssueUrl);
+            };
+
+            if (view === 'gantt' && !getCachedView(view)) {
+                const content = document.getElementById('issues-content');
+                content.setAttribute('aria-busy', 'true');
+                content.innerHTML = '<div class="loading" role="status"><div class="spinner" aria-hidden="true"></div><span>Building Gantt...</span></div>';
+                requestAnimationFrame(() => setTimeout(completeRender, 0));
+            } else {
+                completeRender();
+            }
+        }
+
+        function restoreIssueFocus(issueUrl) {
+            if (!issueUrl) return;
+            requestAnimationFrame(() => {
+                const row = [...document.querySelectorAll('[data-issue-row]')]
+                    .find(element => element.dataset.issueUrl === issueUrl);
+                row?.focus();
+            });
         }
 
         function applyViewButtonState() {
@@ -988,6 +1691,8 @@
             ganttButton.classList.toggle('inactive', activeView !== 'gantt');
             tableButton.setAttribute('aria-pressed', activeView === 'table');
             ganttButton.setAttribute('aria-pressed', activeView === 'gantt');
+            document.getElementById('active-view-label').textContent = activeView === 'table' ? 'Tickets' : 'Gantt';
+            document.querySelector('main').classList.toggle('gantt-active', activeView === 'gantt');
         }
 
         function setGanttZoom(zoom) {
@@ -995,6 +1700,7 @@
             ganttZoom = zoom;
             storePreference(ganttZoomPreferenceKey, zoom);
             renderAllIssues();
+            document.querySelector(`[data-gantt-zoom="${zoom}"]`)?.focus();
         }
 
         function sortIssuesInPlace(issues) {
@@ -1060,7 +1766,7 @@
             const currentOrder = dir === 'off' ? 'not selected' : dir === 'asc' ? 'ascending' : 'descending';
             const nextOrder = nextSortDir(dir) === 'off' ? 'default order' : nextSortDir(dir) === 'asc' ? 'ascending' : 'descending';
             const buttonLabel = `Sort by ${label}. Current order: ${currentOrder}. Activate for ${nextOrder}.`;
-            return `<th${ariaSort}><span class="th-label">${escapeHtml(label)}<button class="sort-btn" type="button" aria-label="${escapeAttribute(buttonLabel)}" onclick="toggleSort('${key}')">${icon}</button></span></th>`;
+            return `<th${ariaSort}><span class="th-label">${escapeHtml(label)}<button class="sort-btn" type="button" data-sort-key="${key}" aria-label="${escapeAttribute(buttonLabel)}" onclick="toggleSort('${key}')">${icon}</button></span></th>`;
         }
 
         function setProviderStatus(card, online, label, cached = false) {
@@ -1101,17 +1807,18 @@
 
                 const providerNameEl = card.querySelector('.provider-name');
                 const countBadge = data.status.issue_count > 0 ? `<span class="task-count">${data.status.issue_count}</span>` : '';
-                providerNameEl.innerHTML = `${escapeHtml(data.status.name)} ${countBadge}<span class="provider-status" role="status">${statusLabel}</span>`;
+                providerNameEl.innerHTML = `${countBadge}<span class="provider-status" role="status">${statusLabel}</span>`;
 
                 // Store issues for this provider
                 if (data.issues && data.issues.length > 0) {
-                    issuesByProvider[providerName] = data.issues;
+                    issuesByProvider.set(providerName, data.issues);
                 } else if (data.error) {
                     // Keep old issues when refresh fails and clearly mark them as stale.
                     setProviderError(card, `Could not refresh issues. Showing previously loaded data. ${data.error}`);
                 } else {
-                    issuesByProvider[providerName] = [];
+                    issuesByProvider.set(providerName, []);
                 }
+                invalidateRenderedViews();
 
                 // Render all issues from all providers
                 renderAllIssues();
@@ -1134,19 +1841,54 @@
 
             // Combine all issues from all providers
             let allIssues = [];
-            for (const [providerName, issues] of Object.entries(issuesByProvider)) {
+            for (const [providerName, issues] of issuesByProvider.entries()) {
                 if (hiddenProviders.has(providerName)) continue;
                 allIssues = allIssues.concat(issues);
             }
 
             if (allIssues.length === 0) {
-                content.innerHTML = '<div class="empty-state">No visible open issues. Click "Show" or "Refresh" on a provider to load issues.</div>';
-                countEl.textContent = '0 issues';
+                content.innerHTML = '<div class="empty-state">No visible open tickets. Click "Show" or "Refresh" on a provider to load tickets.</div>';
+                countEl.textContent = '0 tickets';
+                content.removeAttribute('aria-busy');
                 return;
             }
 
-            countEl.textContent = allIssues.length + ' issue' + (allIssues.length !== 1 ? 's' : '');
-            content.innerHTML = activeView === 'gantt' ? renderGantt(allIssues) : renderIssuesTable(allIssues);
+            countEl.textContent = allIssues.length + ' ticket' + (allIssues.length !== 1 ? 's' : '');
+            const cached = getCachedView(activeView);
+            if (cached) {
+                content.innerHTML = cached;
+            } else {
+                const html = activeView === 'gantt' ? renderGantt(allIssues) : renderIssuesTable(allIssues);
+                renderedViewCache.set(viewCacheKey(activeView), { html, createdAt: Date.now() });
+                content.innerHTML = html;
+            }
+            content.removeAttribute('aria-busy');
+            if (activeView === 'gantt') {
+                const scrollDate = ganttScrollDate || utcToday().toISOString().slice(0, 10);
+                requestAnimationFrame(() => scrollGanttToDate(scrollDate));
+                ganttScrollDate = null;
+            }
+        }
+
+        function viewCacheKey(view) {
+            const viewState = view === 'gantt' ? ganttZoom : `${sortState.key}:${sortState.dir}`;
+            return `${view}:${viewState}:${renderRevision}`;
+        }
+
+        function getCachedView(view) {
+            const key = viewCacheKey(view);
+            const cached = renderedViewCache.get(key);
+            if (!cached) return null;
+            if (Date.now() - cached.createdAt >= renderedViewCacheTTL) {
+                renderedViewCache.delete(key);
+                return null;
+            }
+            return cached.html;
+        }
+
+        function invalidateRenderedViews() {
+            renderRevision += 1;
+            renderedViewCache.clear();
         }
 
         function utcToday() {
@@ -1213,6 +1955,7 @@
         function showTodayGantt() {
             ganttScrollDate = utcToday().toISOString().slice(0, 10);
             scrollGanttToDate(ganttScrollDate);
+            document.querySelector('[data-gantt-today]')?.focus();
         }
 
         function renderGantt(issues) {
@@ -1223,14 +1966,14 @@
             const columns = `var(--gantt-task-width) repeat(${dayCount}, minmax(${dayWidth}px, 1fr))`;
             const minWidth = dayCount * dayWidth;
             let html = '<div class="gantt-toolbar">';
-            for (const zoom of ['month', 'quarter', 'year']) {
-                html += `<button type="button" class="${ganttZoom === zoom ? 'active' : ''}" onclick="setGanttZoom('${zoom}')">${zoom[0].toUpperCase() + zoom.slice(1)}</button>`;
-            }
-            html += '<button type="button" onclick="showTodayGantt()">Today</button>';
+            html += `<button type="button" data-gantt-zoom="month" class="${ganttZoom === 'month' ? 'active' : ''}" onclick="setGanttZoom('month')"><u>M</u>onth</button>`;
+            html += `<button type="button" data-gantt-zoom="quarter" class="${ganttZoom === 'quarter' ? 'active' : ''}" onclick="setGanttZoom('quarter')"><u>Q</u>uarter</button>`;
+            html += `<button type="button" data-gantt-zoom="year" class="${ganttZoom === 'year' ? 'active' : ''}" onclick="setGanttZoom('year')"><u>Y</u>ear</button>`;
+            html += '<button type="button" data-gantt-today onclick="showTodayGantt()">To<u>d</u>ay</button>';
             html += '<span class="gantt-period-label">Scroll to explore all task dates</span></div>';
-            html += `<div class="gantt-scroll"><div class="gantt-grid" style="--gantt-task-width: ${ganttTaskWidth}px; grid-template-columns: ${columns}; grid-template-rows: 32px 30px repeat(${issues.length}, 36px); width: max(100%, calc(var(--gantt-task-width) + ${minWidth}px));">`;
+            html += `<div class="gantt-scroll"><div class="gantt-grid" style="--gantt-task-width: ${ganttTaskWidth}px; --gantt-day-count: ${dayCount}; grid-template-columns: ${columns}; grid-template-rows: 32px 30px repeat(${issues.length}, 36px); width: max(100%, calc(var(--gantt-task-width) + ${minWidth}px));">`;
             html += '<div class="gantt-task-header" style="grid-column: 1; grid-row: 1 / 3;">Task</div>';
-            html += `<div class="gantt-resize-handle" style="grid-column: 1; grid-row: 1 / ${issues.length + 3};" tabindex="0" aria-label="Task column width" aria-orientation="vertical" aria-valuemin="180" aria-valuemax="600" aria-valuenow="${Math.round(ganttTaskWidth)}" role="separator"></div>`;
+            html += `<div class="gantt-resize-handle" style="grid-column: 1; grid-row: 1 / ${issues.length + 3};" tabindex="0" aria-label="Task column width" aria-orientation="vertical" aria-valuemin="360" aria-valuemax="900" aria-valuenow="${Math.round(ganttTaskWidth)}" role="separator"></div>`;
 
             let monthStartIndex = 0;
             for (let index = 1; index <= dayCount; index++) {
@@ -1249,20 +1992,16 @@
                 const isToday = day.getTime() === today.getTime();
                 const isoDate = day.toISOString().slice(0, 10);
                 html += `<div class="gantt-day-header ${weekend ? 'weekend' : ''} ${monthStart ? 'month-start' : ''} ${isToday ? 'today' : ''}" data-date="${isoDate}" style="grid-column: ${index + 2}; grid-row: 2;" title="${isoDate}">${day.getUTCDate()}</div>`;
+                if (weekend || monthStart || isToday) {
+                    html += `<div class="gantt-day-band ${weekend ? 'weekend' : ''} ${monthStart ? 'month-start' : ''} ${isToday ? 'today' : ''}" style="grid-column: ${index + 2}; grid-row: 3 / ${issues.length + 3};"></div>`;
+                }
             }
 
             issues.forEach((issue, issueIndex) => {
                 const row = issueIndex + 3;
                 const color = getProviderColor(issue.source);
-                html += `<div class="gantt-task" style="grid-column: 1; grid-row: ${row}; border-left: 4px solid ${color};"><a href="${escapeAttribute(issue.web_url)}" target="_blank" title="${escapeAttribute(issue.title)}">${escapeHtml(issue.title)}</a></div>`;
-
-                for (let index = 0; index < dayCount; index++) {
-                    const day = addUTCDays(start, index);
-                    const weekend = day.getUTCDay() === 0 || day.getUTCDay() === 6;
-                    const monthStart = day.getUTCDate() === 1;
-                    const isToday = day.getTime() === today.getTime();
-                    html += `<div class="gantt-day ${weekend ? 'weekend' : ''} ${monthStart ? 'month-start' : ''} ${isToday ? 'today' : ''}" style="grid-column: ${index + 2}; grid-row: ${row};"></div>`;
-                }
+                html += `<div class="gantt-task" tabindex="0" data-issue-row data-issue-url="${escapeAttribute(issue.web_url)}" style="grid-column: 1; grid-row: ${row}; border-left: 4px solid ${color};"><a href="${escapeAttribute(issue.web_url)}" target="_blank" rel="noopener noreferrer" title="${escapeAttribute(issue.title)}">[${escapeHtml(issue.source)}] ${escapeHtml(issue.title)}</a></div>`;
+                html += `<div class="gantt-row-grid" style="grid-column: 2 / ${dayCount + 2}; grid-row: ${row};"></div>`;
 
                 const taskStart = getIssueStartDate(issue);
                 let taskEnd = dateFromIssue(issue.due_at) || today;
@@ -1277,25 +2016,22 @@
                 html += `<div class="gantt-bar" style="--provider-color: ${color}; color: ${getReadableTextColor(color)}; grid-column: ${startIndex + 2} / ${endIndex + 3}; grid-row: ${row};" title="${escapeAttribute(title)}">${escapeHtml(issue.title)}</div>`;
             });
 
-            const scrollDate = ganttScrollDate || today.toISOString().slice(0, 10);
-            requestAnimationFrame(() => scrollGanttToDate(scrollDate));
-            ganttScrollDate = null;
             return html + '</div></div>';
         }
 
         function renderIssuesTable(issues) {
             sortIssuesInPlace(issues);
 
-            let html = '<table>';
+            let html = '<div class="table-scroll"><table>';
             html += '<thead><tr>';
             html += '<th>Source</th>';
-            html += '<th>Ref</th>';
             html += '<th>Title</th>';
-            html += '<th>Status</th>';
             html += renderSortableHeader('Priority', 'priority');
             html += renderSortableHeader('Due', 'due');
+            html += '<th>Status</th>';
             html += renderSortableHeader('Created', 'created');
             html += renderSortableHeader('Updated', 'updated');
+            html += '<th>Ref</th>';
             html += '</tr></thead>';
             html += '<tbody>';
 
@@ -1310,19 +2046,19 @@
                 const priority = issue.priority || '';
                 const labelsHtml = renderLabels(issue.labels || []);
 
-                html += `<tr style="border-left: 4px solid ${color};">`;
-                html += '<td class="issue-source">' + escapeHtml(issue.source) + '</td>';
-                html += '<td class="issue-ref"><a href="' + escapeHtml(issue.web_url) + '" target="_blank">' + escapeHtml(urlPath) + '</a></td>';
-                html += '<td class="issue-title"><a href="' + escapeHtml(issue.web_url) + '" target="_blank">' + escapeHtml(issue.title) + '</a>' + labelsHtml + '</td>';
-                html += '<td class="issue-status">' + escapeHtml(status) + '</td>';
-                html += '<td class="issue-priority">' + escapeHtml(priority) + '</td>';
-                html += '<td class="date-cell">' + escapeHtml(due) + '</td>';
-                html += '<td class="date-cell">' + created + '</td>';
-                html += '<td class="date-cell">' + updated + '</td>';
+                html += `<tr tabindex="0" data-issue-row data-issue-url="${escapeAttribute(issue.web_url)}" style="border-left: 4px solid ${color};">`;
+                html += '<td class="issue-source" data-label="Source">' + escapeHtml(issue.source) + '</td>';
+                html += '<td class="issue-title" data-label="Title"><a href="' + escapeAttribute(issue.web_url) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(issue.title) + '</a>' + labelsHtml + '</td>';
+                html += '<td class="issue-priority" data-label="Priority">' + escapeHtml(priority) + '</td>';
+                html += '<td class="date-cell date-cell-due" data-label="Due">' + escapeHtml(due) + '</td>';
+                html += '<td class="issue-status" data-label="Status">' + escapeHtml(status) + '</td>';
+                html += '<td class="date-cell date-cell-created" data-label="Created">' + created + '</td>';
+                html += '<td class="date-cell date-cell-updated" data-label="Updated">' + updated + '</td>';
+                html += '<td class="issue-ref" data-label="Reference"><a href="' + escapeAttribute(issue.web_url) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(urlPath) + '</a></td>';
                 html += '</tr>';
             }
 
-            html += '</tbody></table>';
+            html += '</tbody></table></div>';
             return html;
         }
 
